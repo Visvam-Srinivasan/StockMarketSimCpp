@@ -5,11 +5,14 @@
 #include<string>
 #include<sstream>
 #include<stdlib.h>
+#include<cstdlib>
 #include<iomanip>
 #include<math.h>
 
 using namespace std;
 
+
+char bufferChar;
 
 //Classes
 
@@ -46,14 +49,18 @@ class Account
         void setColumnIndex();
 
         void getAccountDetails();
-        void displayAccountDetails();
-        void deposit();
-        void withdraw();
+       // void displayAccountDetails();
+       // void deposit();
+      //  void withdraw();
+
+        void logoutBank();
+        //void deleteAccount();
 
 
 
 
-}accObj;
+
+}AccObj;
 
 
 //Main menu function
@@ -65,20 +72,63 @@ void Menu::mainMenu()
     switch(choice)
     {
         case 1:
-        accObj.loginBank();
+        AccObj.loginBank();
         break;
 
 
         case 2:
-        accObj.createAccount();
+        AccObj.createAccount();
         break;
     }
 }
 
+void Menu::accountMenu()
+{
+    int choice;
 
+    do
+    {  
+        cout << "\t\tACCOUNT MENU\n\t****************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Logout\n\n5 - Delete Account\n\n\tEnter choice: ";
+        cin >> choice;
+
+        switch(choice)
+        {
+            case 1:
+           // AccObj.displayAccountDetails();
+            break;
+
+            case 2:
+           // AccObj.withdraw();
+            break;
+
+            case 3:
+            //AccObj.deposit();
+            break;
+
+            case 4:
+           // AccObj.logoutBank();
+            break;
+
+            case 5:
+            //AccObj.deleteAccount();
+            break;
+
+            default:
+            cout << "\n\nINVALID INPUT - Please enter a number upto 5\n\n";
+        }
+
+    } while (choice>5);
+
+}
+
+
+//Get details to create bank account
 void Account::getAccountDetails()
 {
-    cout << "\t\tCREATE AN ACCOUNT\n\t****************************\n\nEnter name: ";
+    cout << "\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
+
+    cin.get(bufferChar);
+    
     getline(cin, name);
     cout << "\nEnter Mail ID: ";
     cin >> emailID;
@@ -88,10 +138,6 @@ void Account::getAccountDetails()
     cin >> password;
 
     //Make function to check valid mail and password
-
-
-
-
     //Removes any blank spaces in the name
     for(int i = 0; i < name.length(); i++)
     {
@@ -102,19 +148,18 @@ void Account::getAccountDetails()
     }
 }
 
-
-//Create bank account
+//Creates account and stores data
 void Account::createAccount()
 {
     getAccountDetails();
 
     fstream file;
-    file.open("accountDataBase.dat", ios::app | ios::in | ios::out);
+    file.open("accountDataBase.txt", ios::app | ios::in | ios::out);
     file<<name<<" "<<password<<" "<<balance<<" "<<emailID<<endl;
     file.close();
 }
 
-
+//Login to bank
 void Account::loginBank()
 {
     int accNoInput;
@@ -145,16 +190,14 @@ void Account::setColumnIndex()
     string line;
     fstream file;
 
-    file.open("accountDataBase.dat", ios::in);
+    file.open("accountDataBase.txt", ios::in);
 
     for(int i = 0; i <= currentAccountIndex; i++)
     {
-        file>>"\n";
+        getline(file, line);
     }
 
     int currentIndex = 1;
-    getline(file, line);
-
     for(int i = 0; i < line.length(); i++)
     {
         if(line[i] == ' ')
@@ -164,6 +207,7 @@ void Account::setColumnIndex()
         }
     }
 
+    file.close();
 }
 
 //Validates the credentials for login provided by user
@@ -176,7 +220,7 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
     int lineNumber = 0;
     bool successLoginFlag = 0;
 
-    file.open("accountDataBase.dat", ios::app | ios::in);
+    file.open("accountDataBase.txt", ios::app | ios::in);
 
     while(getline(file, line))
     {   
@@ -222,3 +266,20 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
 
 }
 
+void Account::logoutBank()
+{
+    char choice;
+    cout << "\n\tCONFIRM IF YOU WANT TO LOGOUT (Y/N): ";
+    cin >> choice;
+
+    if(choice=='Y'||choice=='y')
+    {
+        MenuObj.mainMenu();
+    }
+}
+
+int main()
+{
+    MenuObj.mainMenu();
+    return 0;
+}
