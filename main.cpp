@@ -1,23 +1,18 @@
 #include<iostream>
 #include<fstream>
-
 #include<vector>
 #include<string>
 #include<sstream>
 #include<stdlib.h>
+#include<cstdlib>
+#include<time.h>
 #include<cstdlib>
 #include<iomanip>
 #include<math.h>
 
 using namespace std;
 
-
 char bufferChar;
-
-//Classes
-
-class Portfolio;
-
 
 class Menu
 {
@@ -27,7 +22,6 @@ class Menu
 
 }MenuObj;
 
-
 class Account
 {
     private:
@@ -35,10 +29,10 @@ class Account
         string name; 
         string emailID;
         string password;
-        int accountNum;
+        string accountID;
         int balance;
 
-        int currentAccountIndex;
+        int currentAccountRow;
         int columnIndex[4] = {0};
 
     public:
@@ -49,12 +43,15 @@ class Account
         void setColumnIndex();
 
         void getAccountDetails();
-       // void displayAccountDetails();
-       // void deposit();
-      //  void withdraw();
+        void displayAccountDetails();
+        void deposit();
+        void withdraw();
 
         void logoutBank();
-        //void deleteAccount();
+        void deleteAccount();
+
+        void generateAccountID();
+        void updateSequenceAccIDComponent();
 
 
 
@@ -62,8 +59,7 @@ class Account
 
 }AccObj;
 
-
-//Main menu function
+//Main menu
 void Menu::mainMenu()
 {
     int choice;
@@ -82,6 +78,7 @@ void Menu::mainMenu()
     }
 }
 
+//Menu after login
 void Menu::accountMenu()
 {
     int choice;
@@ -94,23 +91,23 @@ void Menu::accountMenu()
         switch(choice)
         {
             case 1:
-           // AccObj.displayAccountDetails();
+            AccObj.displayAccountDetails();
             break;
 
             case 2:
-           // AccObj.withdraw();
+            AccObj.withdraw();
             break;
 
             case 3:
-            //AccObj.deposit();
+            AccObj.deposit();
             break;
 
             case 4:
-           // AccObj.logoutBank();
+            AccObj.logoutBank();
             break;
 
             case 5:
-            //AccObj.deleteAccount();
+            AccObj.deleteAccount();
             break;
 
             default:
@@ -120,7 +117,6 @@ void Menu::accountMenu()
     } while (choice>5);
 
 }
-
 
 //Get details to create bank account
 void Account::getAccountDetails()
@@ -152,25 +148,79 @@ void Account::getAccountDetails()
 void Account::createAccount()
 {
     getAccountDetails();
+    generateAccountID();
 
     fstream file;
     file.open("accountDataBase.csv", ios::app | ios::in | ios::out);
-    file<<name<<','<<password<<','<<balance<<','<<emailID<<endl;
+    file<<accountID<<','<<password<<','<<name<<','<<balance<<','<<emailID<<endl;
+    file.close();
+
+    MenuObj.mainMenu();
+}
+
+//Generates unique AccountID for new account
+void Account::generateAccountID()
+{
+    fstream file;
+    string sequenceComponent;
+    int randomComponent;
+
+    file.open("accountDataBase.cvv", ios::in | ios::out | ios::app);
+
+    //Initially sets the sequential component of the accountID and saves it onto the accounts data base
+    if(file.tellg()==0)
+    {
+        file << 1000 << endl;
+    }
+
+    //Getting unique first sequence for account ID
+    file.seekg(0, ios::beg);
+    getline(file, sequenceComponent);
+
+    //Generating random sequence for account ID
+    int randomComponent = rand();
+
+    accountID = sequenceComponent + to_string(randomComponent);
+
+    file.close();
+
+    updateSequenceAccIDComponent();
+}
+
+//Updates the initial sequence to the Account ID creation in the database
+void Account::updateSequenceAccIDComponent()
+{
+    fstream file;
+    string line;
+    int sequenceComponent;
+
+    file.open("accountsDataBase.cvv", ios::in|ios::out);
+    file.seekg(0, ios::beg);
+    file.seekp(0, ios::beg);
+
+    //Incrementing unique initial sequence
+    getline(file, line);
+    sequenceComponent = stoi(line);
+    sequenceComponent++;
+
+    //Storing incremented sequence
+    file << to_string(sequenceComponent) << endl;
+
     file.close();
 }
 
 //Login to bank
 void Account::loginBank()
 {
-    int accNoInput;
+    string accNoInput;
     string passwordInput;
     bool loginSuccessStatus = 0;
-    cout<<"\t\tLOGIN TO ACCOUNT\n\t************************\n\nEnter Account Number: ";
+    cout<<"\t\tLOGIN TO ACCOUNT\n\n************************************************\n\nEnter Account Number: ";
     cin >> accNoInput;
     cout << "Enter password: ";
     cin >> passwordInput;
 
-    loginSuccessStatus = validateLogin(to_string(accNoInput), passwordInput);
+    loginSuccessStatus = validateLogin(accNoInput, passwordInput);
 
     if(loginSuccessStatus)
     {
@@ -189,18 +239,18 @@ void Account::setColumnIndex()
 {
     string line;
     fstream file;
+    int currentIndex = 1;
 
     file.open("accountDataBase.csv", ios::in);
 
-    for(int i = 0; i <= currentAccountIndex; i++)
+    for(int i = 0; i <= currentAccountRow; i++)
     {
         getline(file, line);
     }
 
-    int currentIndex = 1;
     for(int i = 0; i < line.length(); i++)
     {
-        if(line[i] == ' ')
+        if(line[i] == ',')
         {
             columnIndex[currentIndex] = i+1;
             currentIndex++;
@@ -214,8 +264,9 @@ void Account::setColumnIndex()
 bool Account::validateLogin(string accountNumInput, string passwordInput)
 {
     string line;
-    string column;
+    string columnValues;
     fstream file;
+
     int columnNumber = 0;
     int lineNumber = 0;
     bool successLoginFlag = 0;
@@ -224,16 +275,18 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
 
     while(getline(file, line))
     {   
-
+        //Splits string line into distinct data items onto the stream 's'
         stringstream s(line);
 
-        while(s >> column)
+        //Iterates through distinct data items from stream 's'
+        while(s >> columnValues)
         {
-            if(columnNumber == 0 && column != accountNumInput)
+            //Checking if input values match
+            if(columnNumber == 0 && columnValues != accountNumInput)
                 break;
             else 
             {
-                if(columnNumber == 1 && column == passwordInput) 
+                if(columnNumber == 1 && columnValues == passwordInput) 
                 {
                     successLoginFlag = 1;
                     break;
@@ -243,7 +296,10 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
                     if(columnNumber>=1) 
                         break;
                     else
+                    {
+                        columnNumber++;
                         continue;
+                    }
                 }
             }
         }
@@ -256,16 +312,16 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
 
     if(successLoginFlag)
     {
-        currentAccountIndex = lineNumber;
+        currentAccountRow = lineNumber;
         setColumnIndex();
     }
 
-
     file.close();
-    return successLoginFlag;
 
+    return successLoginFlag;
 }
 
+//Logout
 void Account::logoutBank()
 {
     char choice;
@@ -276,10 +332,16 @@ void Account::logoutBank()
     {
         MenuObj.mainMenu();
     }
+    else
+    {
+        MenuObj.accountMenu();
+    }
 }
 
 int main()
 {
+    //Sets seed of random value generator to the current time
+    srand(time(0));
     MenuObj.mainMenu();
     return 0;
 }
