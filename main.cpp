@@ -128,7 +128,7 @@ void Account::getAccountDetails()
     cout << "\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
 
     cin.get(bufferChar);
-    
+
     getline(cin, name);
     cout << "\nEnter Mail ID: ";
     cin >> emailID;
@@ -154,8 +154,8 @@ void Account::createAccount()
     getAccountDetails();
 
     fstream file;
-    file.open("accountDataBase.txt", ios::app | ios::in | ios::out);
-    file<<name<<" "<<password<<" "<<balance<<" "<<emailID<<endl;
+    file.open("accountDataBase.csv", ios::app | ios::in | ios::out);
+    file<<name<<','<<password<<','<<balance<<','<<emailID<<endl;
     file.close();
 }
 
@@ -190,7 +190,7 @@ void Account::setColumnIndex()
     string line;
     fstream file;
 
-    file.open("accountDataBase.txt", ios::in);
+    file.open("accountDataBase.csv", ios::in);
 
     for(int i = 0; i <= currentAccountIndex; i++)
     {
@@ -220,7 +220,7 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
     int lineNumber = 0;
     bool successLoginFlag = 0;
 
-    file.open("accountDataBase.txt", ios::app | ios::in);
+    file.open("accountDataBase.csv", ios::app | ios::in);
 
     while(getline(file, line))
     {   
