@@ -1,7 +1,9 @@
 #include<iostream>
 #include<fstream>
+
 #include<vector>
 #include<string>
+#include<sstream>
 #include<stdlib.h>
 #include<iomanip>
 #include<math.h>
@@ -18,11 +20,9 @@ class Menu
 {
     public:
     void mainMenu();
+    void accountMenu();
 
-};
-
-
-
+}MenuObj;
 
 
 class Account
@@ -130,21 +130,24 @@ void Account::loginBank()
     if(loginSuccessStatus)
     {
         cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###";
+        MenuObj.accountMenu();
     }
     else
     {
         cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!";
-        mainMenu();
+        MenuObj.mainMenu();
     }
 }
 
-
+//Stores indices of columns in the logged in account
 void Account::setColumnIndex()
 {
     string line;
     fstream file;
+
     file.open("accountDataBase.dat", ios::in);
-    for(int i = 0; i <= currentAccountIndex)
+
+    for(int i = 0; i <= currentAccountIndex; i++)
     {
         file>>"\n";
     }
@@ -163,32 +166,59 @@ void Account::setColumnIndex()
 
 }
 
-
+//Validates the credentials for login provided by user
 bool Account::validateLogin(string accountNumInput, string passwordInput)
 {
     string line;
+    string column;
     fstream file;
+    int columnNumber = 0;
     int lineNumber = 0;
     bool successLoginFlag = 0;
+
     file.open("accountDataBase.dat", ios::app | ios::in);
+
     while(getline(file, line))
     {   
 
+        stringstream s(line);
 
-        
-        lineNumber++;
+        while(s >> column)
+        {
+            if(columnNumber == 0 && column != accountNumInput)
+                break;
+            else 
+            {
+                if(columnNumber == 1 && column == passwordInput) 
+                {
+                    successLoginFlag = 1;
+                    break;
+                }
+                else
+                {
+                    if(columnNumber>=1) 
+                        break;
+                    else
+                        continue;
+                }
+            }
+        }
+
+        if(successLoginFlag)
+            break;
+        else
+            lineNumber++;
     }
 
-
-
-
-    if(successLoginFlag == 1)
+    if(successLoginFlag)
     {
         currentAccountIndex = lineNumber;
         setColumnIndex();
-        return successLoginFlag;
     }
 
+
+    file.close();
+    return successLoginFlag;
 
 }
 
