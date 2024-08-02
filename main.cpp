@@ -63,7 +63,7 @@ class Account
 void Menu::mainMenu()
 {
     int choice;
-    cout << "\t\tSTOCK MARKET SIM\n************************************************\n1 - Login\n2 - Create Account\n\nEnter Choice: ";
+    cout << "\n\t\tSTOCK MARKET SIM\n************************************************\n1 - Login\n2 - Create Account\n\nEnter Choice: ";
     cin >> choice;
     switch(choice)
     {
@@ -85,7 +85,7 @@ void Menu::accountMenu()
 
     do
     {  
-        cout << "\t\tACCOUNT MENU\n\t****************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Logout\n\n5 - Delete Account\n\n\tEnter choice: ";
+        cout << "\t\tACCOUNT MENU\n\t****************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Logout\n\t5 - Delete Account\n\n\tEnter choice: ";
         cin >> choice;
 
         switch(choice)
@@ -152,6 +152,7 @@ void Account::createAccount()
 
     fstream file;
     file.open("accountDataBase.csv", ios::app | ios::in | ios::out);
+
     file<<accountID<<','<<password<<','<<name<<','<<balance<<','<<emailID<<endl;
     file.close();
 
@@ -165,24 +166,40 @@ void Account::generateAccountID()
     string sequenceComponent;
     int randomComponent;
 
-    file.open("accountDataBase.cvv", ios::in | ios::out | ios::app);
+    file.open("accountDataBase.csv", ios::in|ios::out);
+
+
+    if (!file.is_open()) 
+    {
+    cerr << "Error opening file." << endl;
+    return;  // Exit the function if the file couldn't be opened
+    }
 
     //Initially sets the sequential component of the accountID and saves it onto the accounts data base
-    if(file.tellg()==0)
+    /*if(file)
     {
         file << 1000 << endl;
     }
+    */
+
 
     //Getting unique first sequence for account ID
-    file.seekg(0, ios::beg);
-    getline(file, sequenceComponent);
+    //file.seekg(0, ios::beg);
+    if (getline(file, sequenceComponent)) {
+        cout << "First line: " << sequenceComponent << endl;  // Print the first line to the console
+    } else {
+        cerr << "Error reading the file or file is empty." << endl;
+    }
 
     //Generating random sequence for account ID
-    int randomComponent = rand();
+    randomComponent = rand();
 
     accountID = sequenceComponent + to_string(randomComponent);
 
+    cout << endl << accountID << endl;
+
     file.close();
+    file.clear();
 
     updateSequenceAccIDComponent();
 }
@@ -194,12 +211,15 @@ void Account::updateSequenceAccIDComponent()
     string line;
     int sequenceComponent;
 
-    file.open("accountsDataBase.cvv", ios::in|ios::out);
-    file.seekg(0, ios::beg);
-    file.seekp(0, ios::beg);
+    file.open("accountsDataBase.csv", ios::ate|ios::in|ios::out);
+    //file.seekp(0);
+    //file.seekp(0, ios::beg);
 
     //Incrementing unique initial sequence
     getline(file, line);
+
+    cout << "\n\nSEQUENCE OUTPUT: " << line << endl;
+
     sequenceComponent = stoi(line);
     sequenceComponent++;
 
@@ -224,12 +244,12 @@ void Account::loginBank()
 
     if(loginSuccessStatus)
     {
-        cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###";
+        cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
         MenuObj.accountMenu();
     }
     else
     {
-        cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!";
+        cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!\n";
         MenuObj.mainMenu();
     }
 }
@@ -263,7 +283,7 @@ void Account::setColumnIndex()
 //Validates the credentials for login provided by user
 bool Account::validateLogin(string accountNumInput, string passwordInput)
 {
-    string line;
+    string line; 
     string columnValues;
     fstream file;
 
@@ -278,8 +298,8 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
         //Splits string line into distinct data items onto the stream 's'
         stringstream s(line);
 
-        //Iterates through distinct data items from stream 's'
-        while(s >> columnValues)
+        //Iterates through distinct data separated by ',' items from stream 's' 
+        while(getline(s, columnValues, ','))
         {
             //Checking if input values match
             if(columnNumber == 0 && columnValues != accountNumInput)
@@ -337,6 +357,18 @@ void Account::logoutBank()
         MenuObj.accountMenu();
     }
 }
+
+void Account::withdraw()
+{}
+
+void Account::deposit()
+{}
+
+void Account::displayAccountDetails()
+{}
+
+void Account::deleteAccount()
+{}
 
 int main()
 {
