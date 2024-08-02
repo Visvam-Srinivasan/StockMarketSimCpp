@@ -18,11 +18,11 @@ class Menu
 {
     public:
     void mainMenu();
-    void accountMenu();
+    void bankAccountMenu();
 
 }MenuObj;
 
-class Account
+class BankAccount
 {
     private:
 
@@ -74,7 +74,7 @@ void Menu::mainMenu()
 }
 
 //Menu after login
-void Menu::accountMenu()
+void Menu::bankAccountMenu()
 {
     int choice;
 
@@ -113,26 +113,8 @@ void Menu::accountMenu()
 
 }
 
-//Get details to create bank account
-void Account::getAccountDetails()
-{
-    cout << "\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
-
-    cin.get(bufferChar);
-
-    getline(cin, name);
-    cout << "\nEnter Mail ID: ";
-    cin >> emailID;
-    cout << "\nEnter initial deposit: ";
-    cin >> balance;
-    cout << "\nEnter password for account: ";
-    cin >> password;
-
-    //Make function to check valid mail and password
-}
-
 //Creates account and stores data
-void Account::createAccount()
+void BankAccount::createAccount()
 {
     getAccountDetails();
     generateAccountID();
@@ -151,8 +133,26 @@ void Account::createAccount()
     MenuObj.mainMenu();
 }
 
+//Get details to create bank account
+void BankAccount::getAccountDetails()
+{
+    cout << "\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
+
+    cin.get(bufferChar);
+
+    getline(cin, name);
+    cout << "\nEnter Mail ID: ";
+    cin >> emailID;
+    cout << "\nEnter initial deposit: ";
+    cin >> balance;
+    cout << "\nEnter password for account: ";
+    cin >> password;
+
+    //Make function to check valid mail and password
+}
+
 //Generates unique AccountID for new account
-void Account::generateAccountID()
+void BankAccount::generateAccountID()
 {
     int randomComponent = rand();
     int entryNumber = -1;
@@ -202,7 +202,7 @@ void Account::generateAccountID()
 }
 
 //Login to bank
-void Account::loginBank()
+void BankAccount::loginBank()
 {
     string accNoInput;
     string passwordInput;
@@ -217,7 +217,7 @@ void Account::loginBank()
     if(loginSuccessStatus)
     {
         cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
-        MenuObj.accountMenu();
+        MenuObj.bankAccountMenu();
     }
     else
     {
@@ -226,34 +226,8 @@ void Account::loginBank()
     }
 }
 
-//Stores indices of columns in the logged in account
-void Account::setColumnIndex()
-{
-    string line;
-    fstream file;
-    int currentIndex = 1;
-
-    file.open("accountDataBase.csv", ios::in);
-
-    for(int i = 0; i <= currentAccountRow; i++)
-    {
-        getline(file, line);
-    }
-
-    for(int i = 0; i < line.length(); i++)
-    {
-        if(line[i] == ',')
-        {
-            columnIndex[currentIndex] = i+1;
-            currentIndex++;
-        }
-    }
-
-    file.close();
-}
-
 //Validates the credentials for login provided by user
-bool Account::validateLogin(string accountNumInput, string passwordInput)
+bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
 {
     string line; 
     string columnValues;
@@ -318,8 +292,34 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
     return successLoginFlag;
 }
 
+//Stores indices of columns in the logged in account
+void BankAccount::setColumnIndex()
+{
+    string line;
+    fstream file;
+    int currentIndex = 1;
+
+    file.open("accountDataBase.csv", ios::in);
+
+    for(int i = 0; i <= currentAccountRow; i++)
+    {
+        getline(file, line);
+    }
+
+    for(int i = 0; i < line.length(); i++)
+    {
+        if(line[i] == ',')
+        {
+            columnIndex[currentIndex] = i+1;
+            currentIndex++;
+        }
+    }
+
+    file.close();
+}
+
 //Logout
-void Account::logoutBank()
+void BankAccount::logoutBank()
 {
     char choice;
     cout << "\n\tCONFIRM IF YOU WANT TO LOGOUT (Y/N): ";
@@ -331,20 +331,20 @@ void Account::logoutBank()
     }
     else
     {
-        MenuObj.accountMenu();
+        MenuObj.bankAccountMenu();
     }
 }
 
-void Account::withdraw()
+void BankAccount::withdraw()
 {}
 
-void Account::deposit()
+void BankAccount::deposit()
 {}
 
-void Account::displayAccountDetails()
+void BankAccount::displayAccountDetails()
 {}
 
-void Account::deleteAccount()
+void BankAccount::deleteAccount()
 {}
 
 int main()
