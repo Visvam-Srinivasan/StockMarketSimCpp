@@ -29,7 +29,7 @@ class Account
         string name; 
         string emailID;
         string password;
-        string accountID;
+        string accountNumber;
         int balance;
 
         int currentAccountRow;
@@ -52,11 +52,6 @@ class Account
 
         void generateAccountID();
         void updateSequenceAccIDComponent();
-
-
-
-
-
 }AccObj;
 
 //Main menu
@@ -134,14 +129,6 @@ void Account::getAccountDetails()
     cin >> password;
 
     //Make function to check valid mail and password
-    //Removes any blank spaces in the name
-    for(int i = 0; i < name.length(); i++)
-    {
-        if(name[i]==' ')
-            {
-                name[i] = '#';
-            }
-    }
 }
 
 //Creates account and stores data
@@ -153,7 +140,7 @@ void Account::createAccount()
     fstream file;
     file.open("accountDataBase.csv", ios::app | ios::in | ios::out);
 
-    file<<accountID<<','<<password<<','<<name<<','<<balance<<','<<emailID<<endl;
+    file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID<<endl;
     file.close();
 
     MenuObj.mainMenu();
@@ -162,71 +149,43 @@ void Account::createAccount()
 //Generates unique AccountID for new account
 void Account::generateAccountID()
 {
-    fstream file;
-    string sequenceComponent;
     int randomComponent;
+    int entryNumber = -1;
+    string prevAccNumber;
 
-    file.open("accountDataBase.csv", ios::in|ios::out);
 
-
+    string line;
+    fstream file;
+    file.open("accountDataBase.cvv", ios::ate|ios::in);
     if (!file.is_open()) 
     {
-    cerr << "Error opening file." << endl;
-    return;  // Exit the function if the file couldn't be opened
+        cerr << "Error opening file in generation ID." << endl;
+        return;  // Exit the function if the file couldn't be open
     }
 
-    //Initially sets the sequential component of the accountID and saves it onto the accounts data base
-    /*if(file)
+    file.seekg(0);
+    while(getline(file, line))
     {
-        file << 1000 << endl;
-    }
-    */
-
-
-    //Getting unique first sequence for account ID
-    //file.seekg(0, ios::beg);
-    if (getline(file, sequenceComponent)) {
-        cout << "First line: " << sequenceComponent << endl;  // Print the first line to the console
-    } else {
-        cerr << "Error reading the file or file is empty." << endl;
+        entryNumber++;
     }
 
-    //Generating random sequence for account ID
-    randomComponent = rand();
+    if(entryNumber>1)
+    {
+        stringstream s(line);
+        getline(s, prevAccNumber);
+        prevAccNumber.erase(prevAccNumber.begin(), prevAccNumber.end()-4);
+        accountNumber = to_string(randomComponent) + to_string(stoi(prevAccNumber) + 1);
+       
+    }
+    else
+    {
+        accountNumber = to_string(randomComponent) + to_string(1000);
+    }
 
-    accountID = sequenceComponent + to_string(randomComponent);
-
-    cout << endl << accountID << endl;
-
-    file.close();
-    file.clear();
-
-    updateSequenceAccIDComponent();
-}
-
-//Updates the initial sequence to the Account ID creation in the database
-void Account::updateSequenceAccIDComponent()
-{
-    fstream file;
-    string line;
-    int sequenceComponent;
-
-    file.open("accountsDataBase.csv", ios::ate|ios::in|ios::out);
-    //file.seekp(0);
-    //file.seekp(0, ios::beg);
-
-    //Incrementing unique initial sequence
-    getline(file, line);
-
-    cout << "\n\nSEQUENCE OUTPUT: " << line << endl;
-
-    sequenceComponent = stoi(line);
-    sequenceComponent++;
-
-    //Storing incremented sequence
-    file << to_string(sequenceComponent) << endl;
+    cout << endl << accountNumber << endl;
 
     file.close();
+
 }
 
 //Login to bank
@@ -292,6 +251,11 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
     bool successLoginFlag = 0;
 
     file.open("accountDataBase.csv", ios::app | ios::in);
+    if (!file.is_open()) 
+    {
+    cerr << "Error opening file." << endl;
+    return 0;  // Exit the function if the file couldn't be opened
+    }
 
     while(getline(file, line))
     {   
