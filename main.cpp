@@ -139,6 +139,11 @@ void Account::createAccount()
 
     fstream file;
     file.open("accountDataBase.csv", ios::app | ios::in | ios::out);
+    if (!file.is_open()) 
+    {
+        cerr << "Error opening file in generation ID." << endl;
+        return;  // Exit the function if the file couldn't be open
+    }
 
     file<<endl<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
     file.close();
@@ -261,8 +266,8 @@ bool Account::validateLogin(string accountNumInput, string passwordInput)
     file.open("accountDataBase.csv", ios::app | ios::in);
     if (!file.is_open()) 
     {
-    cerr << "Error opening file." << endl;
-    return 0;  // Exit the function if the file couldn't be opened
+        cerr << "Error opening file." << endl;
+        return 0;  // Exit the function if the file couldn't be opened
     }
 
     while(getline(file, line))
