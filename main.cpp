@@ -140,7 +140,7 @@ void Account::createAccount()
     fstream file;
     file.open("accountDataBase.csv", ios::app | ios::in | ios::out);
 
-    file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID<<endl;
+    file<<endl<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
     file.close();
 
     MenuObj.mainMenu();
@@ -149,14 +149,14 @@ void Account::createAccount()
 //Generates unique AccountID for new account
 void Account::generateAccountID()
 {
-    int randomComponent;
+    int randomComponent = rand();
     int entryNumber = -1;
     string prevAccNumber;
 
 
     string line;
     fstream file;
-    file.open("accountDataBase.cvv", ios::ate|ios::in);
+    file.open("accountDataBase.csv", ios::ate|ios::in);
     if (!file.is_open()) 
     {
         cerr << "Error opening file in generation ID." << endl;
@@ -168,12 +168,20 @@ void Account::generateAccountID()
     {
         entryNumber++;
     }
+ 
+    cout << endl << "entry number: " << entryNumber << endl;
 
-    if(entryNumber>1)
+    if(entryNumber>0)
     {
         stringstream s(line);
-        getline(s, prevAccNumber);
+        getline(s, prevAccNumber, ',');
+
+                        cout << endl << prevAccNumber << endl;
+
         prevAccNumber.erase(prevAccNumber.begin(), prevAccNumber.end()-4);
+
+                        cout << endl << prevAccNumber << endl;
+
         accountNumber = to_string(randomComponent) + to_string(stoi(prevAccNumber) + 1);
        
     }
