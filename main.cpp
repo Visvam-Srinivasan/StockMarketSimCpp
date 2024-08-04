@@ -45,7 +45,6 @@ class BankAccount
         void loginBank();
         bool validateLogin(string , string);
         void setColumnIndex();
-        void displayAccountDetails();
         void logoutBank();
         void setBankAccountData(int);
 
@@ -56,7 +55,8 @@ class BankAccount
         bool changeBalance(int, bool);
         bool changeBalance(int, bool, string);
 
-
+        //Other bank account operations
+        void displayBankAccountDetails();
         void deleteAccount();
 
 
@@ -94,7 +94,7 @@ void Menu::bankAccountMenu()
         switch(choice)
         {
             case 1:
-            AccObj.displayAccountDetails();
+            AccObj.displayBankAccountDetails();
             break;
 
             case 2:
@@ -142,7 +142,7 @@ void BankAccount::createAccount()
     file.close();
 
     cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
-    displayAccountDetails();
+    displayBankAccountDetails();
 
     cout << "\n\t!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
     MenuObj.mainMenu();
@@ -611,8 +611,22 @@ void BankAccount::setBankAccountData(int inputRowNumber)
     file.close();
 }
 
-void BankAccount::displayAccountDetails()
-{}
+void BankAccount::displayBankAccountDetails()
+{
+    char choice;
+    cout << "\n\t\tBANK ACCOUNT DETAILS\n************************************************\n\t\tName: " << name <<"\n\t\tAccount Number: "<<accountNumber<<"\n\t\tBalance: "<<balance<<"\n\t\tE-Mail ID: " << emailID << endl;
+    cout << "\tDo you want to view your account password (Y/N): ";
+    cin >> choice;
+    if(choice=='Y'||choice=='y')
+    {
+        cout << "\n\t\tPassword: " << password;
+    }
+    else
+    {
+        MenuObj.bankAccountMenu();
+    }
+
+}
 
 void BankAccount::deleteAccount()
 {}
