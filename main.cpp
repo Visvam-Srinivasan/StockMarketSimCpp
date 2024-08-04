@@ -58,14 +58,14 @@ class BankAccount
         bool changeBalance(int, bool);
         bool changeBalance(int, bool, string);
 
-        void setBankAccountData();
+        void setBankAccountData(int);
 }AccObj;
 
 //Main menu
 void Menu::mainMenu()
 {
     int choice;
-    cout << "\n\t\tSTOCK MARKET SIM\n************************************************\n1 - Login\n2 - Create Account\n\nEnter Choice: ";
+    cout << "\n\t\t\tSTOCK MARKET SIM\n************************************************\n\t\t1 - Login\n\t\t2 - Create Account\n\nEnter Choice: ";
     cin >> choice;
     switch(choice)
     {
@@ -87,7 +87,7 @@ void Menu::bankAccountMenu()
 
     do
     {  
-        cout << "\t\tACCOUNT MENU\n\t****************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Logout\n\t5 - Delete Account\n\n\tEnter choice: ";
+        cout << "\t\tACCOUNT MENU\n\t****************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Transfer\n\t5 - Delete Account\n\n\tEnter choice: ";
         cin >> choice;
 
         switch(choice)
@@ -105,7 +105,7 @@ void Menu::bankAccountMenu()
             break;
 
             case 4:
-            AccObj.logoutBank();
+            AccObj.transfer();
             break;
 
             case 5:
@@ -228,7 +228,7 @@ void BankAccount::loginBank()
     if(loginSuccessStatus)
     {
         cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
-        setBankAccountData();
+        setBankAccountData(currentAccountRow);
         MenuObj.bankAccountMenu();
     }
     else
@@ -238,7 +238,7 @@ void BankAccount::loginBank()
     }
 }
 
-void BankAccount::setBankAccountData()
+void BankAccount::setBankAccountData(int inputRowNumber)
 {
     fstream file;
     string row;
@@ -250,7 +250,7 @@ void BankAccount::setBankAccountData()
         return;  // Exit the function if the file couldn't be opened
     }
 
-    for(int i = 0; i <=currentAccountRow; i++)
+    for(int i = 0; i <=inputRowNumber; i++)
     {
         getline(file, row);
     }
@@ -280,7 +280,7 @@ void BankAccount::setBankAccountData()
         }
     }
 
-    cout << accountNumber << endl << password << endl << balance << endl << name << endl << emailID << " : stuff" << endl;
+            //cout << accountNumber << endl << password << endl << balance << endl << name << endl << emailID << " : stuff" << endl;
 
     file.close();
 }
@@ -448,6 +448,32 @@ void BankAccount::deposit()
 
 void BankAccount::transfer()
 {
+    int transferAmount;
+    string transferAccountNumber;
+    string row;
+    bool withdrawSuccess = 0;
+
+    string stringBalanceAmount;
+
+    cout << "\nEnter account number to transfer to: ";
+    cin >> transferAccountNumber;
+
+    cout << "Enter amount to transfer: ";
+    cin >> transferAmount;
+
+    withdrawSuccess = changeBalance(transferAmount, 1);
+
+    if(!withdrawSuccess)
+    {
+        cout << "\nTransfer amount greater than balance." << endl;
+        return;
+    }
+    else
+    {
+        changeBalance(transferAmount, 0, transferAccountNumber);
+        cout << "\nSUCCESSFULLY TRANSFERED\nCurrent Balance: " << balance << endl;
+    }
+
 }
 
 //Change balance of the current account
@@ -467,7 +493,8 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
     file.seekg(0);
     file.seekp(0);
 
-    cout << endl << currentAccountRow << endl;
+            //cout << endl << currentAccountRow << endl; 
+
     for(int i = 0; i <= currentAccountRow; i++)
     {
         getline(file, row);
@@ -477,12 +504,12 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
     //Gets balance substring from the row
     stringBalanceAmount = row.substr(columnIndex[2], columnIndex[3] - columnIndex[2] - 1);
 
-    cout << endl << stringBalanceAmount << endl;
+                //cout << endl << stringBalanceAmount << endl;
 
     //Deposit
     if(choiceOfOp == 0)
     {
-        balance+=stoi(stringBalanceAmount);
+        balance+=changeByAmount;
         success = 1;
     }
     //Withdraw
@@ -520,8 +547,10 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
     fstream file;
     string row;
     string stringBalanceAmount;
+    int balanceOfInputAccount;
     string accNumber;
     bool foundAccFlag = 0;
+    int rowNumber = 0;
 
     file.open("accountDataBase.csv", ios::ate|ios::in|ios::out);
     if (!file.is_open()) 
@@ -530,17 +559,20 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
         return 0;  // Exit the function if the file couldn't be opened
     }
 
+    file.seekg(0);
+    file.seekp(0);
+
     //Finding input account number
-    for(int i = 0; i <= currentAccountRow; i++)
+    while(getline(file, row))
     {
-        getline(file, row);
         stringstream s(row);
-        s >> accNumber;
+        getline(s, accNumber, ',');
         if(accNumber == accNumberInput)
         {
             foundAccFlag = 1;
             break;
         } 
+        rowNumber++;
         
     }
 
@@ -556,29 +588,28 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
         //Deposit
         if(choiceOfOp == 0)
         {
-            balance+=stoi(stringBalanceAmount);
-        }
-        //Withdraw
-        else
-        {
-            if(changeByAmount>stoi(stringBalanceAmount))
-            {
-                return 0;
-            }
-            else
-            {
-                balance-=stoi(stringBalanceAmount);
-            }
+            balanceOfInputAccount = stoi(stringBalanceAmount) + changeByAmount;
         }
     
+        file.seekp(-(row.length() + 2), ios::cur);
+        for(int i = 0; i < row.length(); i++)
+        {
+            file << '#';
+        }
+        file.seekp(-(row.length()), ios::cur);
+
+        setBankAccountData(rowNumber);
+        balance = balanceOfInputAccount;
+
         file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
 
     }
 
     file.close();
 
-    return 1;
+    setBankAccountData(currentAccountRow);
 
+    return 1;
 
 }
 
