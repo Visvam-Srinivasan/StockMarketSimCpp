@@ -32,7 +32,7 @@ class BankAccount
         string accountNumber;
         int balance;
 
-        int currentAccountRow;
+        int currentAccountRow = 0;
         int columnIndex[4] = {0};
 
     public:
@@ -46,12 +46,17 @@ class BankAccount
         void displayAccountDetails();
         void deposit();
         void withdraw();
+        void transfer();
 
         void logoutBank();
         void deleteAccount();
 
         void generateAccountID();
         void updateSequenceAccIDComponent();
+
+        void updateAccountBalance(int);
+        bool changeBalance(int, bool);
+        bool changeBalance(int, bool, string);
 }AccObj;
 
 //Main menu
@@ -129,6 +134,10 @@ void BankAccount::createAccount()
 
     file<<endl<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
     file.close();
+
+    cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
+    displayAccountDetails();
+    cout << "\n\t!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
 
     MenuObj.mainMenu();
 }
@@ -235,7 +244,8 @@ bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
 
     int columnNumber = 0;
     int lineNumber = 0;
-    bool successLoginFlag = 0;
+    bool loginSuccessFlag = 0;
+    bool skipFirstLine = 0;
 
     file.open("accountDataBase.csv", ios::app | ios::in);
     if (!file.is_open()) 
@@ -246,6 +256,17 @@ bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
 
     while(getline(file, line))
     {   
+
+        columnNumber = 0;
+
+        //Skips the header of the csv file
+        if(skipFirstLine == 0)
+        {
+            skipFirstLine = 1;
+            lineNumber++;
+            continue;
+        }
+
         //Splits string line into distinct data items onto the stream 's'
         stringstream s(line);
 
@@ -259,7 +280,7 @@ bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
             {
                 if(columnNumber == 1 && columnValues == passwordInput) 
                 {
-                    successLoginFlag = 1;
+                    loginSuccessFlag = 1;
                     break;
                 }
                 else
@@ -275,21 +296,23 @@ bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
             }
         }
 
-        if(successLoginFlag)
+        if(loginSuccessFlag)
             break;
         else
             lineNumber++;
     }
 
-    if(successLoginFlag)
+    if(loginSuccessFlag)
     {
         currentAccountRow = lineNumber;
         setColumnIndex();
     }
 
+    cout << endl << "Line number: " << lineNumber << endl;
+
     file.close();
 
-    return successLoginFlag;
+    return loginSuccessFlag;
 }
 
 //Stores indices of columns in the logged in account
@@ -335,11 +358,161 @@ void BankAccount::logoutBank()
     }
 }
 
+
 void BankAccount::withdraw()
-{}
+{
+    int withdrawAmount;
+    string row;
+    string stringBalanceAmount;
+    bool withdrawSuccess = 0;
+
+    cout << "\nEnter amount to withdraw: ";
+    cin >> withdrawAmount;
+    
+
+    withdrawSuccess = changeBalance(withdrawAmount, 1);
+
+    if(withdrawSuccess)
+    {
+        cout << "\nSUCCESSFULLY WITHDRAWN\nCurrent Balance: " << balance;
+    }
+    else
+    {
+        cout << "\nWithdraw amount greater than balance." << endl;
+
+    }
+
+}
 
 void BankAccount::deposit()
-{}
+{
+    int depositAmount;
+    string row;
+    string stringBalanceAmount;
+
+    cout << "\nEnter amount to deposit: ";
+    cin >> depositAmount;
+
+    changeBalance(depositAmount, 0);
+    cout << "\nSUCCESSFULLY DEPOSITED\nCurrent Balance: " << balance << endl;
+}
+
+bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
+{
+    fstream file;
+    string row;
+    string stringBalanceAmount;
+    bool success = 0;
+    file.open("accountDataBase.csv", ios::ate|ios::in|ios::out);
+    if (!file.is_open()) 
+    {
+        cerr << "Error opening file." << endl;
+        return;  // Exit the function if the file couldn't be opened
+    }
+
+    for(int i = 0; i <= currentAccountRow; i++)
+    {
+        getline(file, row);
+    } 
+
+    //Gets balance substring from the row
+    stringBalanceAmount = row.substr(columnIndex[2], columnIndex[3] - columnIndex[2] - 1);
+
+    //Deposit
+    if(choiceOfOp == 0)
+    {
+        balance+=stoi(stringBalanceAmount);
+        success = 1;
+    }
+    //Withdraw
+    else
+    {
+        if(changeByAmount>stoi(stringBalanceAmount))
+        {
+            return success;
+        }
+        else
+        {
+            balance-=stoi(stringBalanceAmount);
+            success = 1;
+        }
+    }
+    
+    file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
+
+    file.close();
+
+    return success;
+}
+
+bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accNumberInput)
+{
+    fstream file;
+    string row;
+    string stringBalanceAmount;
+    string accNumber;
+    bool foundAccFlag = 0;
+
+    file.open("accountDataBase.csv", ios::ate|ios::in|ios::out);
+    if (!file.is_open()) 
+    {
+        cerr << "Error opening file." << endl;
+        return;  // Exit the function if the file couldn't be opened
+    }
+
+    //Finding input account number
+    for(int i = 0; i <= currentAccountRow; i++)
+    {
+        getline(file, row);
+        stringstream s(row);
+        s >> accNumber;
+        if(accNumber == accNumberInput)
+        {
+            foundAccFlag = 1;
+            break;
+        } 
+        
+    }
+
+    if(!foundAccFlag)
+    {
+        return foundAccFlag;
+    }
+    else
+    {
+        //Gets balance substring from the row
+        stringBalanceAmount = row.substr(columnIndex[3], columnIndex[3] - columnIndex[2] - 1);
+
+        //Deposit
+        if(choiceOfOp == 0)
+        {
+            balance+=stoi(stringBalanceAmount);
+        }
+        //Withdraw
+        else
+        {
+            if(changeByAmount>stoi(stringBalanceAmount))
+            {
+                return 0;
+            }
+            else
+            {
+                balance-=stoi(stringBalanceAmount);
+            }
+        }
+    
+        file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
+
+    }
+
+    file.close();
+
+
+}
+
+void BankAccount::transfer()
+{
+}
 
 void BankAccount::displayAccountDetails()
 {}
