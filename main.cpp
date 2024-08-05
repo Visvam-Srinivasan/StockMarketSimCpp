@@ -44,7 +44,7 @@ class BankAccount
         //Functions for login and logout
         void loginBank();
         bool validateLogin(string , string);
-        void setColumnIndex();
+        void setColumnIndex(int);
         void logoutBank();
         void setBankAccountData(int);
 
@@ -68,7 +68,7 @@ class BankAccount
 void Menu::mainMenu()
 {
     int choice;
-    cout << "\n\t\t\tSTOCK MARKET SIM\n************************************************\n\t\t1 - Login\n\t\t2 - Create Account\n\nEnter Choice: ";
+    cout << "\n\t\tSTOCK MARKET SIM\n************************************************\n\t\t1 - Login\n\t\t2 - Create Account\n\nEnter Choice: ";
     cin >> choice;
     switch(choice)
     {
@@ -88,7 +88,7 @@ void Menu::bankAccountMenu()
 
     do
     {  
-        cout << "\t\tACCOUNT MENU\n\t****************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Transfer\n\t5 - Delete Account\n\n\tEnter choice: ";
+        cout << "\n\t\tACCOUNT MENU\n************************************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Transfer\n\t5 - Delete Account\n\n\tEnter choice: ";
         cin >> choice;
 
         switch(choice)
@@ -144,13 +144,13 @@ void BankAccount::createAccount()
     cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
     displayBankAccountDetails();
 
-    cout << "\n\t!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
+    cout << "\n\n\t!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
     MenuObj.mainMenu();
 }
 
 void BankAccount::getAccountDetails()
 {
-    cout << "\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
+    cout << "\n\n\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
     cin.get(bufferChar);
     getline(cin, name);
     cout << "\nEnter Mail ID: ";
@@ -216,7 +216,7 @@ void BankAccount::loginBank()
     string passwordInput;
     bool loginSuccessStatus = 0;
 
-    cout<<"\t\tLOGIN TO ACCOUNT\n\n************************************************\n\nEnter Account Number: ";
+    cout<<"\n\n\t\tLOGIN TO ACCOUNT\n************************************************\n\nEnter Account Number: ";
     cin >> accNoInput;
     cout << "Enter password: ";
     cin >> passwordInput;
@@ -304,7 +304,7 @@ bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
     if(loginSuccessStatus)
     {
         currentAccountRow = rowNumber;
-        setColumnIndex();
+        setColumnIndex(currentAccountRow);
     }
 
     file.close();
@@ -313,14 +313,14 @@ bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
 }
 
 //Stores indices of columns in the logged in account
-void BankAccount::setColumnIndex()
+void BankAccount::setColumnIndex(int rowInput)
 {
     string line;
     int currentIndex = 0;
 
     fstream file;
     file.open("accountDataBase.csv", ios::in);
-    for(int i = 0; i <= currentAccountRow; i++)
+    for(int i = 0; i <= rowInput; i++)
     {
         getline(file, line);
     }
@@ -442,8 +442,12 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
         getline(file, row);
     } 
 
+            //cout << endl << row << endl;
+
     //Gets balance substring from the row
     balanceAmountString = row.substr(columnIndex[1], columnIndex[2] - columnIndex[1] - 1);
+
+    cout << balanceAmountString << endl;
 
     //Deposit
     if(choiceOfOp == 0)
@@ -456,6 +460,7 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
     {
         if(changeByAmount>stoi(balanceAmountString))
         {
+            cout << "in" << endl;
             return successStatus;
         }
         else
@@ -465,9 +470,12 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
         }
 
     }
-
+            cout << endl << "SA i p: " << file.tellg();
     //Moves put pointer to start of current account's row
     file.seekp(-(row.length() + 2), ios::cur);
+
+            cout << endl << "SA m p: " << file.tellg();
+
 
     //Erases data in row
     for(int i = 0; i < row.length(); i++)
@@ -477,6 +485,9 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
 
     //Moves put pointer back to start of row
     file.seekp(-(row.length()), ios::cur);
+
+                cout << endl << "SA e p: " << file.tellg();
+
 
     file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
 
@@ -488,7 +499,6 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
 //Change balance of input bank account
 bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accNumberInput)
 {
-
     string row;
     string balanceAmountString;
 
@@ -514,6 +524,7 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
     {
         stringstream s(row);
         getline(s, accNumber, ',');
+                //cout << endl << accNumber << endl;
         if(accNumber == accNumberInput)
         {
             foundAccFlag = 1;
@@ -528,30 +539,37 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
     }
     else
     {
+        setColumnIndex(rowNumber);
         //Gets balance substring from the row
         balanceAmountString = row.substr(columnIndex[1], columnIndex[2] - columnIndex[1] - 1);
+
+        cout << endl << "Balance amm: " << balanceAmountString << endl;
 
         //Deposit
         if(choiceOfOp == 0)
         {
             balanceOfInputAccount = stoi(balanceAmountString) + changeByAmount;
         }
-    
+
+        cout << "row " << row << endl << "pos: " << file.tellp();
+
+        setBankAccountData(rowNumber);
+
         //Erares row of input bank account
         file.seekp(-(row.length() + 2), ios::cur);
+        cout << "\nnew pos: " << file.tellp();
         for(int i = 0; i < row.length(); i++)
         {
-            file << '#';
+            file << '$';
         }
         file.seekp(-(row.length()), ios::cur);
 
         //Sets bank account class data members to the input account data
-        setBankAccountData(rowNumber);
 
         //Assigns new balance
         balance = balanceOfInputAccount;
 
-        file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
+        file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID<<endl;
 
     }
 
@@ -559,6 +577,7 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
 
     //Resets bank account class data members to current account data
     setBankAccountData(currentAccountRow);
+    setColumnIndex(currentAccountRow);
 
     return 1;
 }
@@ -615,11 +634,11 @@ void BankAccount::displayBankAccountDetails()
 {
     char choice;
     cout << "\n\t\tBANK ACCOUNT DETAILS\n************************************************\n\t\tName: " << name <<"\n\t\tAccount Number: "<<accountNumber<<"\n\t\tBalance: "<<balance<<"\n\t\tE-Mail ID: " << emailID << endl;
-    cout << "\tDo you want to view your account password (Y/N): ";
+    cout << "\n\tDo you want to view your account password (Y/N): ";
     cin >> choice;
     if(choice=='Y'||choice=='y')
     {
-        cout << "\n\t\tPassword: " << password;
+        cout << "\t\tPassword: " << password;
     }
     else
     {
