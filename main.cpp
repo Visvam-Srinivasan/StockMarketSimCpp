@@ -9,7 +9,15 @@
 #include<cstdlib>
 #include<iomanip>
 #include<math.h>
+
+
+#include "csvLibrary.h"
+
 using namespace std;
+
+string fileName = "accountDataBase.csv";
+
+int const colNums = 5;
 
 char bufferChar;
 
@@ -30,6 +38,8 @@ class BankAccount
         string password;
         string accountNumber;
         int balance;
+
+        string rowItems[colNums];
 
         int currentAccountRow = 0;
         int columnIndex[4] = {0};
@@ -129,17 +139,7 @@ void BankAccount::createAccount()
     getAccountDetails();
     generateAccountID();
 
-    fstream file;
-    file.open("accountDataBase.csv", ios::app | ios::in | ios::out);
-    if (!file.is_open()) 
-    {
-        cerr << "Error opening file in generation ID." << endl;
-        return;  
-    }
-
-    file<<endl<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
-
-    file.close();
+    addRow("accountDataBase.csv", rowItems, 5);
 
     cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
     displayBankAccountDetails();
@@ -152,14 +152,14 @@ void BankAccount::getAccountDetails()
 {
     cout << "\n\n\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
     cin.get(bufferChar);
-    getline(cin, name);
+    getline(cin, rowItems[3]);
     cout << "\nEnter Mail ID: ";
-    cin >> emailID;
+    cin >> rowItems[4];
     cout << "\nEnter initial deposit: ";
     cin >> balance;
+    rowItems[2] = to_string(balance);
     cout << "\nEnter password for account: ";
-    cin >> password;
-
+    cin >> rowItems[1];
     //Make function to check valid mail and password
 }
 
@@ -196,11 +196,14 @@ void BankAccount::generateAccountID()
 
         //Generates account number for new account
         accountNumber = to_string(randomComponent) + to_string(stoi(prevAccNumber) + 1);
+        rowItems[0] = accountNumber;
     }
     else
     {
         //Generates account number for the first account created
         accountNumber = to_string(randomComponent) + to_string(1000);
+        rowItems[0] = accountNumber;
+
     }
 
     file.close();
@@ -212,16 +215,20 @@ void BankAccount::generateAccountID()
 
 void BankAccount::loginBank()
 {
+    vector<string> loginInput;
+    vector<int> columnNumber ({0, 1});
     string accNoInput;
     string passwordInput;
     bool loginSuccessStatus = 0;
 
     cout<<"\n\n\t\tLOGIN TO ACCOUNT\n************************************************\n\nEnter Account Number: ";
     cin >> accNoInput;
+    loginInput.push_back(accNoInput);
     cout << "Enter password: ";
     cin >> passwordInput;
+    loginInput.push_back(passwordInput);
 
-    loginSuccessStatus = validateLogin(accNoInput, passwordInput);
+    loginSuccessStatus = findIfInRow(fileName, loginInput, columnNumber);
 
     if(loginSuccessStatus)
     {
@@ -234,82 +241,6 @@ void BankAccount::loginBank()
         cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!\n";
         MenuObj.mainMenu();
     }
-}
-
-bool BankAccount::validateLogin(string accountNumInput, string passwordInput)
-{
-    string row; 
-    string columnValues;
-
-    int columnNumber = 0;
-    int rowNumber = 0;
-    bool loginSuccessStatus = 0;
-    bool skipFirstLine = 0;
-
-    fstream file;
-    file.open("accountDataBase.csv", ios::app | ios::in);
-    if (!file.is_open()) 
-    {
-        cerr << "Error opening file." << endl;
-        return 0;  
-    }
-
-    while(getline(file, row))
-    {   
-        columnNumber = 0;
-
-        //Skips the header of the csv file
-        if(skipFirstLine == 0)
-        {
-            skipFirstLine = 1;
-            rowNumber++;
-            continue;
-        }
-
-        //Splits string line into distinct data items onto the stream 's'
-        stringstream s(row);
-
-        //Iterates through distinct data items separated by ',' items from stream 's' 
-        while(getline(s, columnValues, ','))
-        {
-            //Checking if input values match
-            if(columnNumber == 0 && columnValues != accountNumInput)
-                break;
-            else 
-            {
-                if(columnNumber == 1 && columnValues == passwordInput) 
-                {
-                    loginSuccessStatus = 1;
-                    break;
-                }
-                else
-                {
-                    if(columnNumber>=1) 
-                        break;
-                    else
-                    {
-                        columnNumber++;
-                        continue;
-                    }
-                }
-            }
-        }
-
-        if(loginSuccessStatus)
-            break;
-        else
-            rowNumber++; 
-    }
-
-    if(loginSuccessStatus)
-    {
-        currentAccountRow = rowNumber;
-        setColumnIndex(currentAccountRow);
-    }
-
-    file.close();
-
-    return loginSuccessStatus;
 }
 
 //Stores indices of columns in the logged in account
@@ -426,6 +357,7 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
     string balanceAmountString;
     bool successStatus = 0;
 
+    //vector<string> row;
     fstream file;
     file.open("accountDataBase.csv", ios::ate|ios::in|ios::out);
     if (!file.is_open()) 
@@ -478,20 +410,23 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
 
 
     //Erases data in row
-    for(int i = 0; i < row.length(); i++)
+    for(int i = 0; i < row.length() + 1; i++)
     {
         file << '#';
     }
 
     //Moves put pointer back to start of row
-    file.seekp(-(row.length()), ios::cur);
+    file.seekp(-(row.length() + 1), ios::cur);
 
                 cout << endl << "SA e p: " << file.tellg();
 
 
-    file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID;
+    file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID<<endl;
+
+    cout << endl << "SA e end: " << file.tellg();
 
     file.close();
+    file.clear();
 
     return successStatus;
 }
@@ -556,7 +491,7 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
         setBankAccountData(rowNumber);
 
         //Erares row of input bank account
-        file.seekp(-(row.length() + 2), ios::cur);
+        file.seekp(-(row.length() + 3), ios::cur);
         cout << "\nnew pos: " << file.tellp();
         for(int i = 0; i < row.length(); i++)
         {
@@ -586,7 +521,7 @@ bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accN
 void BankAccount::setBankAccountData(int inputRowNumber)
 {
     string row;
-    string rowItems;
+    string rowDatas;
 
     fstream file;
     file.open("accountDataBase.csv", ios::in);
@@ -595,6 +530,8 @@ void BankAccount::setBankAccountData(int inputRowNumber)
         cerr << "Error opening file." << endl;
         return;  
     }
+
+    file.seekg(0);
 
     for(int i = 0; i <=inputRowNumber; i++)
     {
@@ -606,23 +543,23 @@ void BankAccount::setBankAccountData(int inputRowNumber)
     //Assigns row members to class members
     for(int i = 0; i < 5; i++)
     {
-        getline(s, rowItems, ',');
+        getline(s, rowDatas, ',');
         switch(i)
         {
             case 0:
-            accountNumber = rowItems;
+            accountNumber = rowDatas;
             break;
             case 1:
-            password = rowItems;
+            password = rowDatas;
             break;
             case 2:
-            balance = stoi(rowItems);
+            balance = stoi(rowDatas);
             break;
             case 3:
-            name = rowItems;
+            name = rowDatas;
             break;
             case 4:
-            emailID = rowItems;
+            emailID = rowDatas;
             break;
         }
     }
