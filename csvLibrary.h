@@ -1,6 +1,14 @@
-#ifndef csvLibrary.h
-#define csvLibrary.h
+#ifndef csvLibrary
+#define csvLibrary
 
-// Header file content
+#include<iostream>
+#include<fstream>
+#include<vector>
+#include<string>
+#include<sstream>
 
-#endif 
+void addRow(std::string fileName, std::string row[], int noOfColumns);
+
+bool findInRow(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput);
+
+#endif
