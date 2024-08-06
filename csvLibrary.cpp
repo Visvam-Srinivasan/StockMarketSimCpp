@@ -31,7 +31,7 @@ void addRow(std::string fileName, std::string row[], int noOfColumns)
     file.close();
 }
 
-bool findInRow(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput)
+bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput)
 {
     std::string row;
     int skipFirstLine = 0;
@@ -104,3 +104,74 @@ bool findInRow(std::string fileName, std::vector<std::string> columnInput, std::
 
 }
 
+void changeDataItem(std::string fileName, std::string newStringInput, int rowNumberInput, int columnNumberInput)
+{
+
+
+    std::string line;
+    std::fstream file1, file2;
+    std::string rowItem;
+    std::vector<std::string>row;
+    file1.open(fileName, std::ios::in);
+    if (!file1.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return;  
+    }
+
+    file2.open("newDatBase.csv", std::ios::out);
+    if (!file1.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return;  
+    }
+
+    int i = 0;
+
+    while(getline(file1, line))
+    {
+        if(i == rowNumberInput)
+        {
+            int j = 0;
+            std::stringstream s(line);
+            while(getline(s, rowItem, ','))
+            {
+                if(j == columnNumberInput)
+                {
+                    if(j == 0)
+                    {
+                        file2 << newStringInput;
+                    }
+                    else
+                    {
+                        file2 << ',' << newStringInput;
+                    }
+                }
+                else
+                {
+                    if(j == 0)
+                    {
+                        file2 << rowItem;
+                    }
+                    else
+                    {
+                        file2 << ',' << rowItem;
+                    }
+                }
+
+                j++;
+            }
+            file2 << std::endl;
+        }
+        else
+        {
+            file2 << line << std::endl;
+        }
+
+        i++;
+    }
+
+    remove(fileName.c_str());
+    rename("newDataBase.csv", fileName.c_str());
+
+}
