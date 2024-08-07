@@ -152,7 +152,9 @@ void BankAccount::getAccountDetails()
 {
     cout << "\n\n\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
     cin.get(bufferChar);
-    getline(cin, rowItems[3]);
+    string name;
+    getline(cin, name);
+    rowItems[3] = name;
     cout << "\nEnter Mail ID: ";
     cin >> rowItems[4];
     cout << "\nEnter initial deposit: ";
@@ -233,6 +235,7 @@ void BankAccount::loginBank()
     if(loginSuccessStatus)
     {
         cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
+        currentAccountRow = findRowNumber("accountDataBase.csv", accNoInput, 0);
         setBankAccountData(currentAccountRow);
         MenuObj.bankAccountMenu();
     }
