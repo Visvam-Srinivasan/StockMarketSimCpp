@@ -175,3 +175,67 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
     rename("newDataBase.csv", fileName.c_str());
 
 }
+
+int findRowNumber(std::string fileName, std::string stringInput, int columnNumberInput)
+{
+    std::string row;
+    int currentRowNumber = 0;
+    int currentColumnNumber = 0;
+    bool findSuccessStatus = 0;
+    std::string column;
+    std::fstream file;
+    file.open(fileName, std::ios::in);
+    if (!file.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return;  
+    }
+
+    int i = 0;
+     while(std::getline(file, row))
+    { 
+
+        //Skips the header of the csv file
+        if(!currentRowNumber)
+        {
+            currentRowNumber++;
+            continue;
+        }
+
+        //Splits string line into distinct data items onto the stream 's'
+        std::stringstream s(row);
+
+        //Iterates through distinct data items separated by ',' items from stream 's' 
+        while(std::getline(s, column, ','))
+        {
+            //Checking if input values match
+            if(currentColumnNumber == columnNumberInput && column == stringInput)
+            {
+                findSuccessStatus = 1;
+                break;
+            }
+            else
+            {
+                currentColumnNumber++;
+                continue;
+            }
+            
+        }
+
+        if(findSuccessStatus)
+        {
+            return currentRowNumber;
+        }
+        else
+        {
+            continue;
+        }
+
+    }   
+
+    if(!findSuccessStatus)
+    {
+        std::cout << "\nGiven Input doesnt exist in the specified column in the database\n";
+        return;
+    }
+}
