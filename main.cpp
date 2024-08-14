@@ -10,7 +10,6 @@
 #include<iomanip>
 #include<math.h>
 
-
 #include "csvLibrary.h"
 
 using namespace std;
@@ -139,7 +138,7 @@ void BankAccount::createAccount()
     getAccountDetails();
     generateAccountID();
 
-    addRow("accountDataBase.csv", rowItems, 5);
+    addRow("accountDataBase.csv", rowItems, colNums);
 
     cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
     displayBankAccountDetails();
@@ -170,29 +169,15 @@ void BankAccount::generateAccountID()
     int randomComponent = rand();
     int entryNumber = -1;
     string prevAccNumber;
-    string row;
 
-    fstream file;
-    file.open("accountDataBase.csv", ios::ate|ios::in);
-    if (!file.is_open()) 
-    {
-        cerr << "Error opening file in generation ID." << endl;
-        return;  
-    }
+    int lastEntryRow = numberOfEntries("accountDataBase.csv");
 
-    file.seekg(0);
-    while(getline(file, row))
-    {
-        entryNumber++;
-    }
+   // cout << "number: " << lastEntryRow << endl;
+    prevAccNumber = getDataItem("accountDataBase.csv", lastEntryRow, 0);
+    //cout << " account: " << prevAccNumber << endl;
  
-    if(entryNumber>0)
+    if(lastEntryRow>0)
     {
-        stringstream s(row);
-
-        //Gets account number of the last entry
-        getline(s, prevAccNumber, ',');
-
         //Erases random component of the account number to get the sequence component
         prevAccNumber.erase(prevAccNumber.begin(), prevAccNumber.end()-4);
 
@@ -207,8 +192,6 @@ void BankAccount::generateAccountID()
         rowItems[0] = accountNumber;
 
     }
-
-    file.close();
 
 }
 
@@ -297,11 +280,11 @@ void BankAccount::withdraw()
 
     cout << "\nEnter amount to withdraw: ";
     cin >> withdrawAmount;
-    
-    withdrawSuccessStatus = changeBalance(withdrawAmount, 1);
 
-    if(withdrawSuccessStatus)
+    if(balance >= withdrawAmount)
     {
+        balance-=withdrawAmount;
+        changeDataItem(fileName, to_string(balance), currentAccountRow, 2);
         cout << "\nSUCCESSFULLY WITHDRAWN\nCurrent Balance: " << balance;
     }
     else
@@ -318,9 +301,9 @@ void BankAccount::deposit()
 
     cout << "\nEnter amount to deposit: ";
     cin >> depositAmount;
-
-    changeBalance(depositAmount, 0);
-
+    
+    balance+=depositAmount;
+    changeDataItem(fileName, to_string(balance), currentAccountRow, 2);
     cout << "\nSUCCESSFULLY DEPOSITED\nCurrent Balance: " << balance << endl;
 }
 
@@ -352,6 +335,8 @@ void BankAccount::transfer()
     }
 
 }
+
+
 
 //Change balance of the current bank account
 bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
@@ -595,6 +580,7 @@ int main()
 {
     //Sets seed of random value generator to the current time
     srand(time(0));
+    
     MenuObj.mainMenu();
     return 0;
 }
