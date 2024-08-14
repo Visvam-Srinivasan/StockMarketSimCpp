@@ -6,23 +6,45 @@
 
 #include "csvLibrary.h"
 
-
-void addRow(std::string fileName, std::string row[], int noOfColumns)
+int numberOfEntries(std::string fileName)
 {
-
+    int numberOfEntries = -1;
+    std::string row;
     std::fstream file;
-    file.open(fileName, std::ios::app | std::ios::in | std::ios::out);
+    file.open(fileName, std::ios::in );
     if (!file.is_open()) 
     {
         std::cerr << "Error opening file in generation ID." << std::endl;
+        return 0;  
+    }
+
+    while(getline(file, row))
+    { 
+        numberOfEntries++;
+    }
+
+    
+    file.close();
+
+    return numberOfEntries;
+
+}
+
+void addRow(std::string fileName, std::string rowItem[], int noOfColumns)
+{
+
+    std::ofstream file;
+    file.open(fileName, std::ios::app);
+    if (!file.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
         return;  
     }
 
     file << std::endl;
     for(int i = 0; i < noOfColumns; i++)
     {
-        std::cout << row[i] << std::endl;
-        file << row[i];
+        file << rowItem[i];
         if(i == noOfColumns - 1)
             break;
         file << ",";
@@ -31,6 +53,7 @@ void addRow(std::string fileName, std::string row[], int noOfColumns)
     file.close();
 }
 
+//Finds if given data is present in a single row at the given column numbers
 bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput)
 {
     std::string row;
@@ -48,7 +71,7 @@ bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std
     }
 
     int i = 0;
-     while(std::getline(file, row))
+    while(std::getline(file, row))
     { 
 
         //Skips the header of the csv file
@@ -91,6 +114,7 @@ bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std
 
         if(findSuccessStatus)
         {
+            file.close();
             return findSuccessStatus;
         }
         else
@@ -100,14 +124,13 @@ bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std
 
     }   
 
+    file.close();
     return findSuccessStatus;
 
 }
 
 void changeDataItem(std::string fileName, std::string newStringInput, int rowNumberInput, int columnNumberInput)
 {
-
-
     std::string line;
     std::fstream file1, file2;
     std::string rowItem;
@@ -173,6 +196,8 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
 
     remove(fileName.c_str());
     rename("newDataBase.csv", fileName.c_str());
+    file1.close();
+
 
 }
 
@@ -188,11 +213,11 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
     if (!file.is_open()) 
     {
         std::cerr << "Error opening file." << std::endl;
-        return;  
+        return 0;  
     }
 
     int i = 0;
-     while(std::getline(file, row))
+    while(std::getline(file, row))
     { 
 
         //Skips the header of the csv file
@@ -224,6 +249,7 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
 
         if(findSuccessStatus)
         {
+            file.close();
             return currentRowNumber;
         }
         else
@@ -236,6 +262,56 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
     if(!findSuccessStatus)
     {
         std::cout << "\nGiven Input doesnt exist in the specified column in the database\n";
-        return;
+        file.close();
+        return 0;
     }
+
+}
+
+std::string getDataItem(std::string fileName,int rowNumberInput, int columnNumberInput) 
+{
+    std::string line;
+    std::fstream file;
+    std::string rowItem;
+    std::vector<std::string>row;
+
+    file.open(fileName, std::ios::in);
+    if (!file.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return NULL;  
+    }
+
+
+    int i = 0;
+    int j = 0;
+
+
+    while(getline(file, line))
+    {
+        j = 0;
+        if(i == rowNumberInput)
+        {
+            std::stringstream s(line);
+            while(getline(s, rowItem, ','))
+            {
+                if(j == columnNumberInput)
+                {
+                    file.close();
+                    return rowItem;
+                }
+                else
+                {
+                    j++;
+                }
+            }
+        }
+
+        i++;
+    }
+
+    file.close();
+
+    std::cout << "\nGiven input does not exist.";
+    return  NULL;
 }

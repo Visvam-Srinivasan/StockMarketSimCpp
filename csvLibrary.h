@@ -14,5 +14,7 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
 
 int findRowNumber(std::string fileName, std::string stringInput, int columnNumberInput);
 
+int numberOfEntries(std::string fileName);
+std::string getDataItem(std::string fileName,int rowNumberInput, int columnNumberInput);
 
 #endif
