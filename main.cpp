@@ -219,6 +219,7 @@ void BankAccount::loginBank()
     {
         cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
         currentAccountRow = findRowNumber("accountDataBase.csv", accNoInput, 0);
+        cout << currentAccountRow;
         setBankAccountData(currentAccountRow);
         MenuObj.bankAccountMenu();
     }
@@ -281,6 +282,7 @@ void BankAccount::withdraw()
     cout << "\nEnter amount to withdraw: ";
     cin >> withdrawAmount;
 
+    cout << "\nBalance: " << balance;
     if(balance >= withdrawAmount)
     {
         balance-=withdrawAmount;
@@ -314,245 +316,61 @@ void BankAccount::transfer()
     bool transferSuccessStatus = 0;
     string stringBalanceAmount;
 
+    string transferAccountBalanceString;
+    int transferAccountBalance;
+    int transferAccountRow = 0;
+
     cout << "\nEnter account number to transfer to: ";
     cin >> transferAccountNumber;
     cout << "Enter amount to transfer: ";
     cin >> transferAmount;
 
-    //Changes balance in sender's account
-    transferSuccessStatus = changeBalance(transferAmount, 1);
-
-    if(!transferSuccessStatus)
+    if(balance >= transferAmount)
     {
-        cout << "\nTransfer amount greater than balance." << endl;
-        return;
+        balance-=transferAmount;
+        changeDataItem(fileName, to_string(balance), currentAccountRow, 2);
+        cout << "\nSUCCESSFULLY TRANSFERRED\nCurrent Balance: " << balance;
+
+            transferAccountRow = findRowNumber(fileName, transferAccountNumber, 0);
+        transferAccountBalanceString = getDataItem(fileName, transferAccountRow, 2);
+        transferAccountBalance = stoi(transferAccountBalanceString) + transferAmount;
+        changeDataItem(fileName, to_string(transferAccountBalance), transferAccountRow, 2);
     }
     else
     {
-        //Changes balance in receiver's account
-        changeBalance(transferAmount, 0, transferAccountNumber);
-        cout << "\nSUCCESSFULLY TRANSFERED\nCurrent Balance: " << balance << endl;
-    }
-
-}
-
-
-
-//Change balance of the current bank account
-bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp)
-{
-    string row;
-    string balanceAmountString;
-    bool successStatus = 0;
-
-    //vector<string> row;
-    fstream file;
-    file.open("accountDataBase.csv", ios::ate|ios::in|ios::out);
-    if (!file.is_open()) 
-    {
-        cerr << "Error opening file." << endl;
-        return 0;  
-    }
-
-    file.seekg(0);
-    file.seekp(0);
-
-    for(int i = 0; i <= currentAccountRow; i++)
-    {
-        getline(file, row);
-    } 
-
-            //cout << endl << row << endl;
-
-    //Gets balance substring from the row
-    balanceAmountString = row.substr(columnIndex[1], columnIndex[2] - columnIndex[1] - 1);
-
-    cout << balanceAmountString << endl;
-
-    //Deposit
-    if(choiceOfOp == 0)
-    {
-        balance+=changeByAmount;
-        successStatus = 1;
-    }
-    //Withdraw
-    else
-    {
-        if(changeByAmount>stoi(balanceAmountString))
-        {
-            cout << "in" << endl;
-            return successStatus;
-        }
-        else
-        {
-            balance-=changeByAmount;
-            successStatus = 1;
-        }
-
-    }
-            cout << endl << "SA i p: " << file.tellg();
-    //Moves put pointer to start of current account's row
-    file.seekp(-(row.length() + 2), ios::cur);
-
-            cout << endl << "SA m p: " << file.tellg();
-
-
-    //Erases data in row
-    for(int i = 0; i < row.length() + 1; i++)
-    {
-        file << '#';
-    }
-
-    //Moves put pointer back to start of row
-    file.seekp(-(row.length() + 1), ios::cur);
-
-                cout << endl << "SA e p: " << file.tellg();
-
-
-    file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID<<endl;
-
-    cout << endl << "SA e end: " << file.tellg();
-
-    file.close();
-    file.clear();
-
-    return successStatus;
-}
-
-//Change balance of input bank account
-bool BankAccount::changeBalance(int changeByAmount, bool choiceOfOp, string accNumberInput)
-{
-    string row;
-    string balanceAmountString;
-
-    string accNumber;
-    int balanceOfInputAccount;
-    int rowNumber = 0;
-
-    bool foundAccFlag = 0;
-
-    fstream file;
-    file.open("accountDataBase.csv", ios::ate|ios::in|ios::out);
-    if (!file.is_open()) 
-    {
-        cerr << "Error opening file." << endl;
-        return 0;  
-    }
-
-    file.seekg(0);
-    file.seekp(0);
-
-    //Finding input account number
-    while(getline(file, row))
-    {
-        stringstream s(row);
-        getline(s, accNumber, ',');
-                //cout << endl << accNumber << endl;
-        if(accNumber == accNumberInput)
-        {
-            foundAccFlag = 1;
-            break;
-        } 
-        rowNumber++;
-    }
-
-    if(!foundAccFlag)
-    {
-        return foundAccFlag;
-    }
-    else
-    {
-        setColumnIndex(rowNumber);
-        //Gets balance substring from the row
-        balanceAmountString = row.substr(columnIndex[1], columnIndex[2] - columnIndex[1] - 1);
-
-        cout << endl << "Balance amm: " << balanceAmountString << endl;
-
-        //Deposit
-        if(choiceOfOp == 0)
-        {
-            balanceOfInputAccount = stoi(balanceAmountString) + changeByAmount;
-        }
-
-        cout << "row " << row << endl << "pos: " << file.tellp();
-
-        setBankAccountData(rowNumber);
-
-        //Erares row of input bank account
-        file.seekp(-(row.length() + 3), ios::cur);
-        cout << "\nnew pos: " << file.tellp();
-        for(int i = 0; i < row.length(); i++)
-        {
-            file << '$';
-        }
-        file.seekp(-(row.length()), ios::cur);
-
-        //Sets bank account class data members to the input account data
-
-        //Assigns new balance
-        balance = balanceOfInputAccount;
-
-        file<<accountNumber<<','<<password<<','<<balance<<','<<name<<','<<emailID<<endl;
+        cout << "\nWithdraw amount greater than balance." << endl;
 
     }
 
-    file.close();
-
-    //Resets bank account class data members to current account data
-    setBankAccountData(currentAccountRow);
-    setColumnIndex(currentAccountRow);
-
-    return 1;
 }
 
 //Assigns bank account class' members with input row number's data
 void BankAccount::setBankAccountData(int inputRowNumber)
 {
-    string row;
-    string rowDatas;
-
-    fstream file;
-    file.open("accountDataBase.csv", ios::in);
-    if (!file.is_open()) 
-    {
-        cerr << "Error opening file." << endl;
-        return;  
-    }
-
-    file.seekg(0);
-
-    for(int i = 0; i <=inputRowNumber; i++)
-    {
-        getline(file, row);
-    }
-
-    stringstream s(row);
+    vector<string> rowItem = getRow(fileName, currentAccountRow);
 
     //Assigns row members to class members
-    for(int i = 0; i < 5; i++)
+    for(int i = 0; i < colNums; i++)
     {
-        getline(s, rowDatas, ',');
         switch(i)
         {
             case 0:
-            accountNumber = rowDatas;
+            accountNumber = rowItem[i];
             break;
             case 1:
-            password = rowDatas;
+            password = rowItem[i];
             break;
             case 2:
-            balance = stoi(rowDatas);
+            balance = stoi(rowItem[i]);
             break;
             case 3:
-            name = rowDatas;
+            name = rowItem[i];
             break;
             case 4:
-            emailID = rowDatas;
+            emailID = rowItem[i];
             break;
         }
     }
-
-    file.close();
 }
 
 void BankAccount::displayBankAccountDetails()
@@ -573,8 +391,41 @@ void BankAccount::displayBankAccountDetails()
 }
 
 void BankAccount::deleteAccount()
-{}
+{
+    vector<string> deleteAccountInput;
+    vector<int> columnNumber ({0, 1});
+    string accountNumberInput, passwordInput;
+    bool successStatus = 0;
 
+    char choice;
+    cout << "\nARE YOU SURE YOU WANT TO DELETE THE ACCOUNT?(Y/N): ";
+    if(choice=='Y'||choice=='y')
+    {
+        cout << "\nEnter account number again: ";
+        cin >> accountNumberInput;
+        deleteAccountInput.push_back(accountNumberInput);
+        cout << "Enter password: ";
+        cin >> passwordInput;
+        deleteAccountInput.push_back(passwordInput);
+        successStatus = findIfInRow(fileName, deleteAccountInput, columnNumber);
+        if(successStatus)
+        {
+            cout << "\nAccount successfully deleted.";
+        }
+        else
+        {
+            cout << "\nIncorrect Account number or password, please relogin.";
+        }
+
+        MenuObj.mainMenu();
+
+    }
+    else
+    {
+        MenuObj.bankAccountMenu();
+    }
+
+}
 
 int main()
 {
