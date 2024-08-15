@@ -3,6 +3,8 @@
 #include<vector>
 #include<string>
 #include<sstream>
+#include <cerrno>
+#include<cstring>
 
 #include "csvLibrary.h"
 
@@ -73,6 +75,7 @@ bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std
     int i = 0;
     while(std::getline(file, row))
     { 
+        currentColumnNumber = 0;
 
         //Skips the header of the csv file
         if(skipFirstLine == 0)
@@ -142,7 +145,7 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
         return;  
     }
 
-    file2.open("newDatBase.csv", std::ios::out);
+    file2.open("changeDataItemTempFile.csv", std::ios::out);
     if (!file1.is_open()) 
     {
         std::cerr << "Error opening file." << std::endl;
@@ -153,8 +156,16 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
 
     while(getline(file1, line))
     {
+        if(i == 0)
+        {
+            file2 << line;
+            i++;
+            continue;
+        }
+
         if(i == rowNumberInput)
         {
+            file2 << std::endl;
             int j = 0;
             std::stringstream s(line);
             while(getline(s, rowItem, ','))
@@ -184,19 +195,40 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
 
                 j++;
             }
-            file2 << std::endl;
+
+            
         }
         else
         {
-            file2 << line << std::endl;
+            file2 << std::endl << line;
         }
 
         i++;
     }
 
-    remove(fileName.c_str());
-    rename("newDataBase.csv", fileName.c_str());
     file1.close();
+    file2.close();
+
+    const int result = std::remove(fileName.c_str());
+    if( result == 0 )
+    {
+        std::cout << "success\n";
+    } 
+    else 
+    {
+        std::cout << "error in removing file\n"; // No such file or directory
+    }
+
+
+    if (std::rename("changeDataItemTempFile.csv", fileName.c_str()) != 0)
+    {
+		perror("Error moving file: ");
+    }
+	else
+    {
+		std::cout << "File moved successfully";
+    }
+
 
 
 }
@@ -209,6 +241,7 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
     bool findSuccessStatus = 0;
     std::string column;
     std::fstream file;
+
     file.open(fileName, std::ios::in);
     if (!file.is_open()) 
     {
@@ -219,9 +252,10 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
     int i = 0;
     while(std::getline(file, row))
     { 
+        currentColumnNumber = 0;
 
         //Skips the header of the csv file
-        if(!currentRowNumber)
+        if(currentRowNumber==0)
         {
             currentRowNumber++;
             continue;
@@ -254,6 +288,7 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
         }
         else
         {
+            currentRowNumber++;
             continue;
         }
 
@@ -265,6 +300,8 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
         file.close();
         return 0;
     }
+
+     return 0;
 
 }
 
@@ -314,4 +351,114 @@ std::string getDataItem(std::string fileName,int rowNumberInput, int columnNumbe
 
     std::cout << "\nGiven input does not exist.";
     return  NULL;
+}
+
+std::vector<std::string> getRow(std::string fileName, int rowNumberInput)
+{
+    std::string line;
+    std::fstream file;
+    std::string rowItem;
+    std::vector<std::string>row;
+
+    file.open(fileName, std::ios::in);
+    if (!file.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return;  
+    }
+
+
+    int i = 0;
+    while(getline(file, line))
+    {
+        if(i == rowNumberInput)
+        {
+            std::stringstream s(line);
+            while(getline(s, rowItem, ','))
+            {
+                row.push_back(rowItem);  
+            }
+            return row;
+        }
+
+        i++;
+    }
+
+    file.close();
+
+    std::cout << "\nGiven input does not exist.";
+    return;
+
+}
+
+void deleteRow(std::string fileName, int rowNumberInput)
+{
+    std::string line;
+    std::fstream file1, file2;
+    std::string rowItem;
+    std::vector<std::string>row;
+    file1.open(fileName, std::ios::in);
+    if (!file1.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return;  
+    }
+
+    file2.open("removeRowTempFie.csv", std::ios::out);
+    if (!file1.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return;  
+    }
+
+    int i = 0;
+
+    while(getline(file1, line))
+    {
+        if(i == 0)
+        {
+            file2 << line;
+            i++;
+            continue;
+        }
+
+        if(i == rowNumberInput)
+        {
+            i++;
+            continue;
+        }
+        else
+        {
+            file2 << std::endl << line;
+        }
+
+        i++;
+    }
+
+    file1.close();
+    file2.close();
+
+    const int result = std::remove(fileName.c_str());
+    if( result == 0 )
+    {
+        std::cout << "success\n";
+    } 
+    else 
+    {
+        std::cout << "error in removing file\n"; // No such file or directory
+    }
+
+
+    if (std::rename("removeRowTempFile.csv", fileName.c_str()) != 0)
+    {
+		perror("Error moving file: ");
+    }
+	else
+    {
+		std::cout << "File moved successfully";
+    }
+
+
+
+
 }

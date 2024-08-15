@@ -16,5 +16,8 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
 
 int numberOfEntries(std::string fileName);
 std::string getDataItem(std::string fileName,int rowNumberInput, int columnNumberInput);
+std::vector<std::string> getRow(std::string fileName, int rowNumberInput);
+void deleteRow(std::string fileName, int rowNumberInput);
+
 
 #endif
