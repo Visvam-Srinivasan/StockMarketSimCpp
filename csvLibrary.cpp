@@ -3,7 +3,8 @@
 #include<vector>
 #include<string>
 #include<sstream>
-#include <cerrno>
+#include<cstdio>
+#include<cerrno>
 #include<cstring>
 
 #include "csvLibrary.h"
@@ -145,8 +146,8 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
         return;  
     }
 
-    file2.open("changeDataItemTempFile.csv", std::ios::out);
-    if (!file1.is_open()) 
+    file2.open("ChangeDataTempFile.csv", std::ios::out);
+    if (!file2.is_open()) 
     {
         std::cerr << "Error opening file." << std::endl;
         return;  
@@ -216,11 +217,13 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
     } 
     else 
     {
-        std::cout << "error in removing file\n"; // No such file or directory
+        std::cout << "\nerror in removing file\n"; // No such file or directory
+        perror ("The following error occurred: ");
+
     }
 
 
-    if (std::rename("changeDataItemTempFile.csv", fileName.c_str()) != 0)
+    if (std::rename("ChangeDataTempFile.csv", fileName.c_str()) != 0)
     {
 		perror("Error moving file: ");
     }
@@ -294,15 +297,9 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
 
     }   
 
-    if(!findSuccessStatus)
-    {
-        std::cout << "\nGiven Input doesnt exist in the specified column in the database\n";
-        file.close();
-        return 0;
-    }
-
-     return 0;
-
+    std::cout << "\nGiven Input doesnt exist in the specified column in the database\n";
+    file.close();
+    return 0;
 }
 
 std::string getDataItem(std::string fileName,int rowNumberInput, int columnNumberInput) 
@@ -364,7 +361,7 @@ std::vector<std::string> getRow(std::string fileName, int rowNumberInput)
     if (!file.is_open()) 
     {
         std::cerr << "Error opening file." << std::endl;
-        return;  
+        return row;  
     }
 
 
@@ -378,6 +375,8 @@ std::vector<std::string> getRow(std::string fileName, int rowNumberInput)
             {
                 row.push_back(rowItem);  
             }
+
+            file.close();
             return row;
         }
 
@@ -385,9 +384,8 @@ std::vector<std::string> getRow(std::string fileName, int rowNumberInput)
     }
 
     file.close();
-
     std::cout << "\nGiven input does not exist.";
-    return;
+    return row;
 
 }
 
