@@ -55,7 +55,7 @@ class BankAccount
         bool validateLogin(string , string);
         void setColumnIndex(int);
         void logoutBank();
-        void setBankAccountData(int);
+        void setBankAccountData();
 
         //Functions to deposit, withdraw and transfer
         void deposit();
@@ -220,7 +220,7 @@ void BankAccount::loginBank()
         cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
         currentAccountRow = findRowNumber("accountDataBase.csv", accNoInput, 0);
         cout << currentAccountRow;
-        setBankAccountData(currentAccountRow);
+        setBankAccountData();
         MenuObj.bankAccountMenu();
     }
     else
@@ -228,31 +228,6 @@ void BankAccount::loginBank()
         cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!\n";
         MenuObj.mainMenu();
     }
-}
-
-//Stores indices of columns in the logged in account
-void BankAccount::setColumnIndex(int rowInput)
-{
-    string line;
-    int currentIndex = 0;
-
-    fstream file;
-    file.open("accountDataBase.csv", ios::in);
-    for(int i = 0; i <= rowInput; i++)
-    {
-        getline(file, line);
-    }
-
-    for(int i = 0; i < line.length(); i++)
-    {
-        if(line[i] == ',')
-        {
-            columnIndex[currentIndex] = i+1;
-            currentIndex++;
-        }
-    }
-
-    file.close();
 }
 
 void BankAccount::logoutBank()
@@ -331,7 +306,7 @@ void BankAccount::transfer()
         changeDataItem(fileName, to_string(balance), currentAccountRow, 2);
         cout << "\nSUCCESSFULLY TRANSFERRED\nCurrent Balance: " << balance;
 
-            transferAccountRow = findRowNumber(fileName, transferAccountNumber, 0);
+        transferAccountRow = findRowNumber(fileName, transferAccountNumber, 0);
         transferAccountBalanceString = getDataItem(fileName, transferAccountRow, 2);
         transferAccountBalance = stoi(transferAccountBalanceString) + transferAmount;
         changeDataItem(fileName, to_string(transferAccountBalance), transferAccountRow, 2);
@@ -345,7 +320,7 @@ void BankAccount::transfer()
 }
 
 //Assigns bank account class' members with input row number's data
-void BankAccount::setBankAccountData(int inputRowNumber)
+void BankAccount::setBankAccountData()
 {
     vector<string> rowItem = getRow(fileName, currentAccountRow);
 
