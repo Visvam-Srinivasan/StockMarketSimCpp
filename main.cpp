@@ -6,14 +6,12 @@
 #include<stdlib.h>
 #include<cstdlib>
 #include<time.h>
-#include<cstdlib>
 #include<iomanip>
 #include<math.h>
 
 #include "csvLibrary.h"
 
 std::string fileName = "accountDataBase.csv";
-
 int const colNums = 5;
 
 char bufferChar;
@@ -70,7 +68,17 @@ class BankAccount
 }AccObj;
 
 
-//MENUS
+int main()
+{
+    //Sets seed of random value generator to the current time
+    srand(time(0));
+    
+    MenuObj.mainMenu();
+    return 0;
+}
+
+
+//      MENUS
 
 void Menu::mainMenu()
 {
@@ -124,19 +132,21 @@ void Menu::bankAccountMenu()
             std::cout << "\n\nINVALID INPUT - Please enter a number upto 5\n\n";
         }
 
-    } while (choice>5);
+    }while(choice>5);
 
 }
 
 
-//CREATE ACCOUNT
+//      BANK ACCOUNT FUNCTIONS
+
+//  CREATE ACCOUNT
 
 void BankAccount::createAccount()
 {
     getAccountDetails();
     generateAccountID();
 
-    addRow("accountDataBase.csv", rowItems, colNums);
+    addRow(fileName, rowItems, colNums);
 
     std::cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
     displayBankAccountDetails();
@@ -165,22 +175,20 @@ void BankAccount::getAccountDetails()
 void BankAccount::generateAccountID()
 {
     int randomComponent = rand();
-    int entryNumber = -1;
-    std::string prevAccNumber;
+    int lastEntryRowNumber;
+    std::string latestAccountNumber;
 
-    int lastEntryRow = numberOfEntries("accountDataBase.csv");
-
-   // cout << "number: " << lastEntryRow << endl;
-    prevAccNumber = getDataItem("accountDataBase.csv", lastEntryRow, 0);
-    //cout << " account: " << prevAccNumber << endl;
+    //Gets the latest account number in the data base
+    lastEntryRowNumber = numberOfEntries("accountDataBase.csv");
+    latestAccountNumber = getDataItem("accountDataBase.csv", lastEntryRowNumber, 0);
  
-    if(lastEntryRow>0)
+    if(lastEntryRowNumber>0)
     {
         //Erases random component of the account number to get the sequence component
-        prevAccNumber.erase(prevAccNumber.begin(), prevAccNumber.end()-4);
+        latestAccountNumber.erase(latestAccountNumber.begin(), latestAccountNumber.end()-4);
 
         //Generates account number for new account
-        accountNumber = std::to_string(randomComponent) + std::to_string(stoi(prevAccNumber) + 1);
+        accountNumber = std::to_string(randomComponent) + std::to_string(stoi(latestAccountNumber) + 1);
         rowItems[0] = accountNumber;
     }
     else
@@ -193,8 +201,7 @@ void BankAccount::generateAccountID()
 
 }
 
-
-//LOGIN ACCOUNT
+//  LOGIN LOGUT OPERATIONS
 
 void BankAccount::loginBank()
 {
@@ -217,7 +224,6 @@ void BankAccount::loginBank()
     {
         std::cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
         currentAccountRow = findRowNumber(fileName, accNoInput, 0);
-        std::cout << currentAccountRow;
         setBankAccountData();
         MenuObj.bankAccountMenu();
     }
@@ -242,79 +248,6 @@ void BankAccount::logoutBank()
     {
         MenuObj.bankAccountMenu();
     }
-}
-
-
-//BANK ACCOUNT OPERATIONS
-
-void BankAccount::withdraw()
-{
-    int withdrawAmount;
-    bool withdrawSuccessStatus = 0;
-
-    std::cout << "\nEnter amount to withdraw: ";
-    std::cin >> withdrawAmount;
-
-    std::cout << "\nBalance: " << balance;
-    if(balance >= withdrawAmount)
-    {
-        balance-=withdrawAmount;
-        changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
-        std::cout << "\nSUCCESSFULLY WITHDRAWN\nCurrent Balance: " << balance;
-    }
-    else
-    {
-        std::cout << "\nWithdraw amount greater than balance." << std::endl;
-
-    }
-
-}
-
-void BankAccount::deposit()
-{
-    int depositAmount;
-
-    std::cout << "\nEnter amount to deposit: ";
-    std::cin >> depositAmount;
-    
-    balance+=depositAmount;
-    changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
-    std::cout << "\nSUCCESSFULLY DEPOSITED\nCurrent Balance: " << balance << std::endl;
-}
-
-void BankAccount::transfer()
-{
-    int transferAmount;
-    std::string transferAccountNumber;
-    bool transferSuccessStatus = 0;
-    std::string stringBalanceAmount;
-
-    std::string transferAccountBalanceString;
-    int transferAccountBalance;
-    int transferAccountRow = 0;
-
-    std::cout << "\nEnter account number to transfer to: ";
-    std::cin >> transferAccountNumber;
-    std::cout << "Enter amount to transfer: ";
-    std::cin >> transferAmount;
-
-    if(balance >= transferAmount)
-    {
-        balance-=transferAmount;
-        changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
-        std::cout << "\nSUCCESSFULLY TRANSFERRED\nCurrent Balance: " << balance;
-
-        transferAccountRow = findRowNumber(fileName, transferAccountNumber, 0);
-        transferAccountBalanceString = getDataItem(fileName, transferAccountRow, 2);
-        transferAccountBalance = stoi(transferAccountBalanceString) + transferAmount;
-        changeDataItem(fileName, std::to_string(transferAccountBalance), transferAccountRow, 2);
-    }
-    else
-    {
-        std::cout << "\nWithdraw amount greater than balance." << std::endl;
-
-    }
-
 }
 
 //Assigns bank account class' members with input row number's data
@@ -350,6 +283,81 @@ void BankAccount::setBankAccountData()
     }
 }
 
+//  BANK ACCOUNT OPERATIONS
+
+void BankAccount::withdraw()
+{
+    int withdrawAmount;
+    bool withdrawSuccessStatus = 0;
+
+    std::cout << "\nEnter amount to withdraw: ";
+    std::cin >> withdrawAmount;
+
+    if(balance >= withdrawAmount)
+    {
+        balance-=withdrawAmount;
+        changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
+        std::cout << "\nSUCCESSFULLY WITHDRAWN\nCurrent Balance: " << balance;
+    }
+    else
+    {
+        std::cout << "\nWithdraw amount greater than balance." << std::endl;
+
+    }
+
+}
+
+void BankAccount::deposit()
+{
+    int depositAmount;
+
+    std::cout << "\nEnter amount to deposit: ";
+    std::cin >> depositAmount;
+    
+    balance+=depositAmount;
+    changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
+    std::cout << "\nSUCCESSFULLY DEPOSITED\nCurrent Balance: " << balance << std::endl;
+}
+
+void BankAccount::transfer()
+{
+    int transferAmount;
+    std::string transferAccountNumber;
+    bool transferSuccessStatus = 0;
+
+    std::string transferAccountBalanceString;
+    int transferAccountBalance;
+    int transferAccountRowNumber = 0;
+
+    std::cout << "\nEnter account number to transfer to: ";
+    std::cin >> transferAccountNumber;
+    std::cout << "Enter amount to transfer: ";
+    std::cin >> transferAmount;
+
+    if(balance >= transferAmount)
+    {
+        balance-=transferAmount;
+
+        //Changes balance in current account
+        changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
+
+        //Chnages balance in the reciever's account
+        transferAccountRowNumber = findRowNumber(fileName, transferAccountNumber, 0);
+        transferAccountBalanceString = getDataItem(fileName, transferAccountRowNumber, 2);
+        transferAccountBalance = stoi(transferAccountBalanceString) + transferAmount;
+        changeDataItem(fileName, std::to_string(transferAccountBalance), transferAccountRowNumber, 2);
+
+        std::cout << "\nSUCCESSFULLY TRANSFERRED\nCurrent Balance: " << balance;
+
+    }
+    else
+    {
+        std::cout << "\nWithdraw amount greater than balance." << std::endl;
+
+    }
+
+}
+
 void BankAccount::displayBankAccountDetails()
 {
     char choice;
@@ -372,6 +380,7 @@ void BankAccount::deleteAccount()
     std::vector<std::string> deleteAccountInput;
     std::vector<int> columnNumber ({0, 1});
     std::string accountNumberInput, passwordInput;
+    int rowNumberInput;
     bool successStatus = 0;
 
     char choice;
@@ -384,9 +393,12 @@ void BankAccount::deleteAccount()
         std::cout << "Enter password: ";
         std::cin >> passwordInput;
         deleteAccountInput.push_back(passwordInput);
+
         successStatus = findIfInRow(fileName, deleteAccountInput, columnNumber);
         if(successStatus)
         {
+            findRowNumber(fileName, accountNumberInput, 0);
+            deleteRow(fileName, rowNumberInput);
             std::cout << "\nAccount successfully deleted.";
         }
         else
@@ -402,13 +414,4 @@ void BankAccount::deleteAccount()
         MenuObj.bankAccountMenu();
     }
 
-}
-
-int main()
-{
-    //Sets seed of random value generator to the current time
-    srand(time(0));
-    
-    MenuObj.mainMenu();
-    return 0;
 }
