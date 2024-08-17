@@ -65,6 +65,7 @@ bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std
     int currentColumnNumber = 0;
     bool findSuccessStatus = 0;
     std::string column;
+
     std::fstream file;
     file.open(fileName, std::ios::in);
     if (!file.is_open()) 
@@ -136,20 +137,21 @@ bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std
 void changeDataItem(std::string fileName, std::string newStringInput, int rowNumberInput, int columnNumberInput)
 {
     std::string line;
-    std::fstream file1, file2;
+    std::fstream file1;
+    std::fstream file2;
     std::string rowItem;
     std::vector<std::string>row;
     file1.open(fileName, std::ios::in);
     if (!file1.is_open()) 
     {
-        std::cerr << "Error opening file." << std::endl;
+        std::cerr << "Error opening file1." << std::endl;
         return;  
     }
 
     file2.open("ChangeDataTempFile.csv", std::ios::out);
     if (!file2.is_open()) 
     {
-        std::cerr << "Error opening file." << std::endl;
+        std::cerr << "Error opening file2." << std::endl;
         return;  
     }
 
@@ -207,13 +209,20 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
         i++;
     }
 
+
     file1.close();
     file2.close();
-
-    const int result = std::remove(fileName.c_str());
-    if( result == 0 )
+    if(std::remove(fileName.c_str())==0)
     {
-        std::cout << "success\n";
+        std::cout << "\nsuccess\n";
+        if (std::rename("ChangeDataTempFile.csv", fileName.c_str()) != 0)
+        {
+		    perror("Error moving file: ");
+        }
+	    else
+        {
+		    std::cout << "File moved successfully";
+        }
     } 
     else 
     {
@@ -221,18 +230,6 @@ void changeDataItem(std::string fileName, std::string newStringInput, int rowNum
         perror ("The following error occurred: ");
 
     }
-
-
-    if (std::rename("ChangeDataTempFile.csv", fileName.c_str()) != 0)
-    {
-		perror("Error moving file: ");
-    }
-	else
-    {
-		std::cout << "File moved successfully";
-    }
-
-
 
 }
 
@@ -253,7 +250,7 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
     }
 
     int i = 0;
-    while(std::getline(file, row))
+    while(getline(file, row))
     { 
         currentColumnNumber = 0;
 
