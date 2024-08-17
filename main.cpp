@@ -12,9 +12,7 @@
 
 #include "csvLibrary.h"
 
-using namespace std;
-
-string fileName = "accountDataBase.csv";
+std::string fileName = "accountDataBase.csv";
 
 int const colNums = 5;
 
@@ -32,13 +30,13 @@ class BankAccount
 {
     private:
 
-        string name; 
-        string emailID;
-        string password;
-        string accountNumber;
+        std::string name; 
+        std::string emailID;
+        std::string password;
+        std::string accountNumber;
         int balance;
 
-        string rowItems[colNums];
+        std::string rowItems[colNums];
 
         int currentAccountRow = 0;
         int columnIndex[4] = {0};
@@ -52,7 +50,7 @@ class BankAccount
 
         //Functions for login and logout
         void loginBank();
-        bool validateLogin(string , string);
+        bool validateLogin(std::string , std::string);
         void setColumnIndex(int);
         void logoutBank();
         void setBankAccountData();
@@ -62,7 +60,7 @@ class BankAccount
         void withdraw();
         void transfer();
         bool changeBalance(int, bool);
-        bool changeBalance(int, bool, string);
+        bool changeBalance(int, bool, std::string);
 
         //Other bank account operations
         void displayBankAccountDetails();
@@ -77,8 +75,8 @@ class BankAccount
 void Menu::mainMenu()
 {
     int choice;
-    cout << "\n\t\tSTOCK MARKET SIM\n************************************************\n\t\t1 - Login\n\t\t2 - Create Account\n\nEnter Choice: ";
-    cin >> choice;
+    std::cout << "\n\t\tSTOCK MARKET SIM\n************************************************\n\t\t1 - Login\n\t\t2 - Create Account\n\nEnter Choice: ";
+    std::cin >> choice;
     switch(choice)
     {
         case 1:
@@ -97,8 +95,8 @@ void Menu::bankAccountMenu()
 
     do
     {  
-        cout << "\n\t\tACCOUNT MENU\n************************************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Transfer\n\t5 - Delete Account\n\n\tEnter choice: ";
-        cin >> choice;
+        std::cout << "\n\t\tACCOUNT MENU\n************************************************\n\n\t1 - Display Account Details\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Transfer\n\t5 - Delete Account\n\n\tEnter choice: ";
+        std::cin >> choice;
 
         switch(choice)
         {
@@ -123,7 +121,7 @@ void Menu::bankAccountMenu()
             break;
 
             default:
-            cout << "\n\nINVALID INPUT - Please enter a number upto 5\n\n";
+            std::cout << "\n\nINVALID INPUT - Please enter a number upto 5\n\n";
         }
 
     } while (choice>5);
@@ -140,27 +138,27 @@ void BankAccount::createAccount()
 
     addRow("accountDataBase.csv", rowItems, colNums);
 
-    cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
+    std::cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
     displayBankAccountDetails();
 
-    cout << "\n\n\t!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
+    std::cout << "\n\n\t!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
     MenuObj.mainMenu();
 }
 
 void BankAccount::getAccountDetails()
 {
-    cout << "\n\n\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
-    cin.get(bufferChar);
-    string name;
-    getline(cin, name);
+    std::cout << "\n\n\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
+    std::cin.get(bufferChar);
+    std::string name;
+    std::getline(std::cin, name);
     rowItems[3] = name;
-    cout << "\nEnter Mail ID: ";
-    cin >> rowItems[4];
-    cout << "\nEnter initial deposit: ";
-    cin >> balance;
-    rowItems[2] = to_string(balance);
-    cout << "\nEnter password for account: ";
-    cin >> rowItems[1];
+    std::cout << "\nEnter Mail ID: ";
+    std::cin >> rowItems[4];
+    std::cout << "\nEnter initial deposit: ";
+    std::cin >> balance;
+    rowItems[2] = std::to_string(balance);
+    std::cout << "\nEnter password for account: ";
+    std::cin >> rowItems[1];
     //Make function to check valid mail and password
 }
 
@@ -168,7 +166,7 @@ void BankAccount::generateAccountID()
 {
     int randomComponent = rand();
     int entryNumber = -1;
-    string prevAccNumber;
+    std::string prevAccNumber;
 
     int lastEntryRow = numberOfEntries("accountDataBase.csv");
 
@@ -182,13 +180,13 @@ void BankAccount::generateAccountID()
         prevAccNumber.erase(prevAccNumber.begin(), prevAccNumber.end()-4);
 
         //Generates account number for new account
-        accountNumber = to_string(randomComponent) + to_string(stoi(prevAccNumber) + 1);
+        accountNumber = std::to_string(randomComponent) + std::to_string(stoi(prevAccNumber) + 1);
         rowItems[0] = accountNumber;
     }
     else
     {
         //Generates account number for the first account created
-        accountNumber = to_string(randomComponent) + to_string(1000);
+        accountNumber = std::to_string(randomComponent) + std::to_string(1000);
         rowItems[0] = accountNumber;
 
     }
@@ -200,32 +198,32 @@ void BankAccount::generateAccountID()
 
 void BankAccount::loginBank()
 {
-    vector<string> loginInput;
-    vector<int> columnNumber ({0, 1});
-    string accNoInput;
-    string passwordInput;
+    std::vector<std::string> loginInput;
+    std::vector<int> columnNumber ({0, 1});
+    std::string accNoInput;
+    std::string passwordInput;
     bool loginSuccessStatus = 0;
 
-    cout<<"\n\n\t\tLOGIN TO ACCOUNT\n************************************************\n\nEnter Account Number: ";
-    cin >> accNoInput;
+    std::cout<<"\n\n\t\tLOGIN TO ACCOUNT\n************************************************\n\nEnter Account Number: ";
+    std::cin >> accNoInput;
     loginInput.push_back(accNoInput);
-    cout << "Enter password: ";
-    cin >> passwordInput;
+    std::cout << "Enter password: ";
+    std::cin >> passwordInput;
     loginInput.push_back(passwordInput);
 
     loginSuccessStatus = findIfInRow(fileName, loginInput, columnNumber);
 
     if(loginSuccessStatus)
     {
-        cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
-        currentAccountRow = findRowNumber("accountDataBase.csv", accNoInput, 0);
-        cout << currentAccountRow;
+        std::cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
+        currentAccountRow = findRowNumber(fileName, accNoInput, 0);
+        std::cout << currentAccountRow;
         setBankAccountData();
         MenuObj.bankAccountMenu();
     }
     else
     {
-        cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!\n";
+        std::cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!\n";
         MenuObj.mainMenu();
     }
 }
@@ -233,8 +231,8 @@ void BankAccount::loginBank()
 void BankAccount::logoutBank()
 {
     char choice;
-    cout << "\n\tCONFIRM IF YOU WANT TO LOGOUT (Y/N): ";
-    cin >> choice;
+    std::cout << "\n\tCONFIRM IF YOU WANT TO LOGOUT (Y/N): ";
+    std::cin >> choice;
 
     if(choice=='Y'||choice=='y')
     {
@@ -254,19 +252,19 @@ void BankAccount::withdraw()
     int withdrawAmount;
     bool withdrawSuccessStatus = 0;
 
-    cout << "\nEnter amount to withdraw: ";
-    cin >> withdrawAmount;
+    std::cout << "\nEnter amount to withdraw: ";
+    std::cin >> withdrawAmount;
 
-    cout << "\nBalance: " << balance;
+    std::cout << "\nBalance: " << balance;
     if(balance >= withdrawAmount)
     {
         balance-=withdrawAmount;
-        changeDataItem(fileName, to_string(balance), currentAccountRow, 2);
-        cout << "\nSUCCESSFULLY WITHDRAWN\nCurrent Balance: " << balance;
+        changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
+        std::cout << "\nSUCCESSFULLY WITHDRAWN\nCurrent Balance: " << balance;
     }
     else
     {
-        cout << "\nWithdraw amount greater than balance." << endl;
+        std::cout << "\nWithdraw amount greater than balance." << std::endl;
 
     }
 
@@ -276,44 +274,44 @@ void BankAccount::deposit()
 {
     int depositAmount;
 
-    cout << "\nEnter amount to deposit: ";
-    cin >> depositAmount;
+    std::cout << "\nEnter amount to deposit: ";
+    std::cin >> depositAmount;
     
     balance+=depositAmount;
-    changeDataItem(fileName, to_string(balance), currentAccountRow, 2);
-    cout << "\nSUCCESSFULLY DEPOSITED\nCurrent Balance: " << balance << endl;
+    changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
+    std::cout << "\nSUCCESSFULLY DEPOSITED\nCurrent Balance: " << balance << std::endl;
 }
 
 void BankAccount::transfer()
 {
     int transferAmount;
-    string transferAccountNumber;
+    std::string transferAccountNumber;
     bool transferSuccessStatus = 0;
-    string stringBalanceAmount;
+    std::string stringBalanceAmount;
 
-    string transferAccountBalanceString;
+    std::string transferAccountBalanceString;
     int transferAccountBalance;
     int transferAccountRow = 0;
 
-    cout << "\nEnter account number to transfer to: ";
-    cin >> transferAccountNumber;
-    cout << "Enter amount to transfer: ";
-    cin >> transferAmount;
+    std::cout << "\nEnter account number to transfer to: ";
+    std::cin >> transferAccountNumber;
+    std::cout << "Enter amount to transfer: ";
+    std::cin >> transferAmount;
 
     if(balance >= transferAmount)
     {
         balance-=transferAmount;
-        changeDataItem(fileName, to_string(balance), currentAccountRow, 2);
-        cout << "\nSUCCESSFULLY TRANSFERRED\nCurrent Balance: " << balance;
+        changeDataItem(fileName, std::to_string(balance), currentAccountRow, 2);
+        std::cout << "\nSUCCESSFULLY TRANSFERRED\nCurrent Balance: " << balance;
 
         transferAccountRow = findRowNumber(fileName, transferAccountNumber, 0);
         transferAccountBalanceString = getDataItem(fileName, transferAccountRow, 2);
         transferAccountBalance = stoi(transferAccountBalanceString) + transferAmount;
-        changeDataItem(fileName, to_string(transferAccountBalance), transferAccountRow, 2);
+        changeDataItem(fileName, std::to_string(transferAccountBalance), transferAccountRow, 2);
     }
     else
     {
-        cout << "\nWithdraw amount greater than balance." << endl;
+        std::cout << "\nWithdraw amount greater than balance." << std::endl;
 
     }
 
@@ -322,7 +320,7 @@ void BankAccount::transfer()
 //Assigns bank account class' members with input row number's data
 void BankAccount::setBankAccountData()
 {
-    vector<string> rowItem = getRow(fileName, currentAccountRow);
+    std::vector<std::string> rowItem = getRow(fileName, currentAccountRow);
 
     //Assigns row members to class members
     for(int i = 0; i < colNums; i++)
@@ -332,15 +330,19 @@ void BankAccount::setBankAccountData()
             case 0:
             accountNumber = rowItem[i];
             break;
+
             case 1:
             password = rowItem[i];
             break;
+
             case 2:
             balance = stoi(rowItem[i]);
             break;
+
             case 3:
             name = rowItem[i];
             break;
+
             case 4:
             emailID = rowItem[i];
             break;
@@ -351,12 +353,12 @@ void BankAccount::setBankAccountData()
 void BankAccount::displayBankAccountDetails()
 {
     char choice;
-    cout << "\n\t\tBANK ACCOUNT DETAILS\n************************************************\n\t\tName: " << name <<"\n\t\tAccount Number: "<<accountNumber<<"\n\t\tBalance: "<<balance<<"\n\t\tE-Mail ID: " << emailID << endl;
-    cout << "\n\tDo you want to view your account password (Y/N): ";
-    cin >> choice;
+    std::cout << "\n\t\tBANK ACCOUNT DETAILS\n************************************************\n\t\tName: " << name <<"\n\t\tAccount Number: "<<accountNumber<<"\n\t\tBalance: "<<balance<<"\n\t\tE-Mail ID: " << emailID << std::endl;
+    std::cout << "\n\tDo you want to view your account password (Y/N): ";
+    std::cin >> choice;
     if(choice=='Y'||choice=='y')
     {
-        cout << "\t\tPassword: " << password;
+        std::cout << "\t\tPassword: " << password;
     }
     else
     {
@@ -367,29 +369,29 @@ void BankAccount::displayBankAccountDetails()
 
 void BankAccount::deleteAccount()
 {
-    vector<string> deleteAccountInput;
-    vector<int> columnNumber ({0, 1});
-    string accountNumberInput, passwordInput;
+    std::vector<std::string> deleteAccountInput;
+    std::vector<int> columnNumber ({0, 1});
+    std::string accountNumberInput, passwordInput;
     bool successStatus = 0;
 
     char choice;
-    cout << "\nARE YOU SURE YOU WANT TO DELETE THE ACCOUNT?(Y/N): ";
+    std::cout << "\nARE YOU SURE YOU WANT TO DELETE THE ACCOUNT?(Y/N): ";
     if(choice=='Y'||choice=='y')
     {
-        cout << "\nEnter account number again: ";
-        cin >> accountNumberInput;
+        std::cout << "\nEnter account number again: ";
+        std::cin >> accountNumberInput;
         deleteAccountInput.push_back(accountNumberInput);
-        cout << "Enter password: ";
-        cin >> passwordInput;
+        std::cout << "Enter password: ";
+        std::cin >> passwordInput;
         deleteAccountInput.push_back(passwordInput);
         successStatus = findIfInRow(fileName, deleteAccountInput, columnNumber);
         if(successStatus)
         {
-            cout << "\nAccount successfully deleted.";
+            std::cout << "\nAccount successfully deleted.";
         }
         else
         {
-            cout << "\nIncorrect Account number or password, please relogin.";
+            std::cout << "\nIncorrect Account number or password, please relogin.";
         }
 
         MenuObj.mainMenu();
