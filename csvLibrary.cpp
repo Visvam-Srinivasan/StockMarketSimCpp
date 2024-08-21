@@ -271,7 +271,7 @@ std::vector<std::string> getRow(std::string fileName, int rowNumberInput)
 }
 
 //  GET DETAILS
-
+ 
 int numberOfEntries(std::string fileName)
 {
     int numberOfEntries = -1;
