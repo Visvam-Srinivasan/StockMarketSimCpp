@@ -1,4 +1,9 @@
-main.exe
+.vscode\launch.json
 .vscode/tasks.json
+.vscode\settings.json
+.vscode\c_cpp_properties.json
+main.exe
 accountDataBase.csv
 csvLibrary.exe
+stockMarketDataBases
+bankAccountDataBase.csv
