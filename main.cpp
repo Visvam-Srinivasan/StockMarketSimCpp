@@ -16,12 +16,34 @@ int const colNums = 7;
 
 char bufferChar;
  
+//      CONSOLE OUTPUT FORMATTERS
+
+std::ostream &newLine(std::ostream &output)
+{
+    output << "\n\t\t\t\t\t\t";
+    return output;
+}
+
+std::ostream &drawLine(std::ostream &output)
+{
+    output << "\n\t\t\t\t************************************************\n";
+    return output;
+}
+
+
+
+
+
+
+
+
 class Menu
 {
     public:
     void mainMenu();
     void bankAccountMenu();
     void openStockMarket();
+    void placeOrderStockMarket();
 
 }MenuObj;
 
@@ -69,7 +91,6 @@ class BankAccount
 
         //Opening and enabling stock market for account
         void openStockMarketMainMenu();
-        void enableStockMarket();
 
 
 
@@ -86,6 +107,7 @@ class StockMarketAccount
 
     void setStockMarketAccount(std::string);
     void showPortfolio();
+    int enableStockMarket(int, std::string);
 
 
 }StockMarketAccObj;
@@ -106,7 +128,7 @@ int main()
 void Menu::mainMenu()
 {
     int choice;
-    std::cout << "\n\t\tSTOCK MARKET SIM\n************************************************\n\t\t1 - Login\n\t\t2 - Create Bank and Market Account\n\nEnter Choice: ";
+    std::cout << newLine << "STOCK MARKET SIM" << drawLine << newLine << "1 - Login" << newLine <<"2 - Create Bank and Market Account" << newLine <<"\nEnter Choice: ";
     std::cin >> choice;
     switch(choice)
     {
@@ -126,7 +148,7 @@ void Menu::bankAccountMenu()
 
     do
     {  
-        std::cout << "\n\t\tACCOUNT MENU\n************************************************\n\n\t1 - STOCK MARKET MENU\n\t2 - Withdraw\n\t3 - Deposit\n\t4 - Transfer\n\t5 - Display Account Details\n\t6 - Delete Account\n\n\tEnter choice: ";
+        std::cout << newLine << "ACCOUNT MENU" << drawLine << newLine <<  "1 - STOCK MARKET MENU" << newLine << "2 - Withdraw" << newLine << "3 - Deposit" << newLine << "4 - Transfer" << newLine << "5 - Display Account Details" << newLine << "6 - Delete Account" << newLine << "\nEnter choice: ";
         std::cin >> choice;
 
         switch(choice)
@@ -170,7 +192,7 @@ void Menu::openStockMarket()
 
     do
     {  
-        std::cout << "\n\t\tSTOCK MARKET\n************************************************\n\n\t1 - Open Portfolio\n\t2 - Place Order\n\t3 - View Orders\n\t4 - Search Symbols\n\t5 - Display Account Details\n\t6 - Return to Bank Account\n\n\tEnter choice: ";
+        std::cout << newLine << "STOCK MARKET" << drawLine << newLine << "1 - Open Portfolio" << newLine << "2 - Place Order" << newLine << "3 - View Orders" << newLine << "4 - Search Symbols" << newLine << "5 - Display Account Details" << newLine << "6 - Return to Bank Account" << newLine << "\nEnter choice: ";
         std::cin >> choice;
 
         switch(choice)
@@ -178,6 +200,8 @@ void Menu::openStockMarket()
 
             case 1:
             StockMarketAccObj.showPortfolio();
+            break;
+
 
             
 
@@ -187,7 +211,7 @@ void Menu::openStockMarket()
             break;
 
             default:
-            std::cout << "\n\nINVALID INPUT - Please enter a number upto 5\n\n";
+            std::cout << newLine << "\nINVALID INPUT - Please enter a number upto 5\n\n";
         }
 
     }while(choice>5);
@@ -195,6 +219,11 @@ void Menu::openStockMarket()
 
 }
 
+void Menu::placeOrderStockMarket()
+{
+
+
+}
 
 //      BANK ACCOUNT FUNCTIONS
 
@@ -207,28 +236,29 @@ void BankAccount::createAccount()
 
     addRow(bankAccountDataBasefileName, rowItems, colNums);
 
-    std::cout << "\n\t## ACCOUNT SUCCESSFULLY CREATED ##\n";
+    std::cout << newLine << "## ACCOUNT SUCCESSFULLY CREATED ##\n";
     displayBankAccountDetails();
 
-    std::cout << "\n\n\t!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
+    std::cout << newLine << "\n!! PLEASE RE-LOGIN TO CONTINUE USING YOUR NEW ACCOUNT !!\n";
     MenuObj.mainMenu();
 }
 
 void BankAccount::getAccountDetails()
 {
-    std::cout << "\n\n\t\tCREATE AN ACCOUNT\n************************************************\n\nEnter name: ";
+    std::cout << newLine << "CREATE AN ACCOUNT" << drawLine << newLine << "\nEnter name: ";
     std::cin.get(bufferChar);
     std::string name;
     std::getline(std::cin, name);
     rowItems[4] = name;
-    std::cout << "\nEnter Mail ID: ";
+    std::cout << newLine << "Enter Mail ID: ";
     std::cin >> rowItems[5];
-    std::cout << "\nEnter initial deposit: ";
+    std::cout << newLine << "Enter initial deposit: ";
     std::cin >> balance;
     rowItems[2] = std::to_string(balance);
-    std::cout << "\nEnter password for account: ";
+    std::cout << newLine << "Enter password for account: ";
     std::cin >> rowItems[1];
 
+    //Sets stock market data to 0 as SM in account is not yet enabled
     rowItems[3] = '0';
     rowItems[6] = '0';
     //Make function to check valid mail and password
@@ -273,10 +303,10 @@ void BankAccount::loginBank()
     std::string passwordInput;
     bool loginSuccessStatus = 0;
 
-    std::cout<<"\n\n\t\tLOGIN TO ACCOUNT\n************************************************\n\nEnter Account Number: ";
+    std::cout<< newLine << "LOGIN TO ACCOUNT" << drawLine << newLine << "\nEnter Account Number: ";
     std::cin >> accNoInput;
     loginInput.push_back(accNoInput);
-    std::cout << "Enter password: ";
+    std::cout << newLine << "Enter password: ";
     std::cin >> passwordInput;
     loginInput.push_back(passwordInput);
 
@@ -284,14 +314,14 @@ void BankAccount::loginBank()
 
     if(loginSuccessStatus)
     {
-        std::cout<<"\n\n\t\t### LOGIN SUCCESSFULL ###\n\n";
+        std::cout<< newLine << "### LOGIN SUCCESSFULL ###\n";
         currentAccountRow = findRowNumber(bankAccountDataBasefileName, accNoInput, 0);
         setBankAccountData();
         MenuObj.bankAccountMenu();
     }
     else
     {
-        std::cout<<"\n\n\t\t!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!\n";
+        std::cout<< newLine << "!!! INCORRECT ACCOUNT NUMBER OR PASSWORD !!!\n";
         MenuObj.mainMenu();
     }
 }
@@ -299,7 +329,7 @@ void BankAccount::loginBank()
 void BankAccount::logoutBank()
 {
     char choice;
-    std::cout << "\n\tCONFIRM IF YOU WANT TO LOGOUT (Y/N): ";
+    std::cout << newLine << "CONFIRM IF YOU WANT TO LOGOUT (Y/N): ";
     std::cin >> choice;
 
     if(choice=='Y'||choice=='y')
@@ -360,18 +390,18 @@ void BankAccount::withdraw()
     int withdrawAmount;
     bool withdrawSuccessStatus = 0;
 
-    std::cout << "\nEnter amount to withdraw: ";
+    std::cout << newLine << "Enter amount to withdraw: ";
     std::cin >> withdrawAmount;
 
     if(balance >= withdrawAmount)
     {
         balance-=withdrawAmount;
         changeDataItem(bankAccountDataBasefileName, std::to_string(balance), currentAccountRow, 2);
-        std::cout << "\nSUCCESSFULLY WITHDRAWN\nCurrent Balance: " << balance;
+        std::cout << newLine << "\nSUCCESSFULLY WITHDRAWN" << drawLine << newLine << "Current Balance: " << balance;
     }
     else
     {
-        std::cout << "\nWithdraw amount greater than balance." << std::endl;
+        std::cout << newLine << "Withdraw amount greater than balance." << std::endl;
 
     }
 
@@ -381,12 +411,12 @@ void BankAccount::deposit()
 {
     int depositAmount;
 
-    std::cout << "\nEnter amount to deposit: ";
+    std::cout << newLine << "Enter amount to deposit: ";
     std::cin >> depositAmount;
     
     balance+=depositAmount;
     changeDataItem(bankAccountDataBasefileName, std::to_string(balance), currentAccountRow, 2);
-    std::cout << "\nSUCCESSFULLY DEPOSITED\nCurrent Balance: " << balance << std::endl;
+    std::cout << newLine << "SUCCESSFULLY DEPOSITED" << drawLine << newLine << " Current Balance: " << balance << std::endl;
 }
 
 void BankAccount::transfer()
@@ -399,9 +429,9 @@ void BankAccount::transfer()
     int transferAccountBalance;
     int transferAccountRowNumber = 0;
 
-    std::cout << "\nEnter account number to transfer to: ";
+    std::cout << newLine << "Enter account number to transfer to: ";
     std::cin >> transferAccountNumber;
-    std::cout << "Enter amount to transfer: ";
+    std::cout << newLine << "Enter amount to transfer: ";
     std::cin >> transferAmount;
 
     if(balance >= transferAmount)
@@ -417,12 +447,12 @@ void BankAccount::transfer()
         transferAccountBalance = stoi(transferAccountBalanceString) + transferAmount;
         changeDataItem(bankAccountDataBasefileName, std::to_string(transferAccountBalance), transferAccountRowNumber, 2);
 
-        std::cout << "\nSUCCESSFULLY TRANSFERRED\nCurrent Balance: " << balance;
+        std::cout << newLine << "SUCCESSFULLY TRANSFERRED" << newLine << "Current Balance: " << balance;
 
     }
     else
     {
-        std::cout << "\nWithdraw amount greater than balance." << std::endl;
+        std::cout << newLine << "Withdraw amount greater than balance." << std::endl;
 
     }
 
@@ -431,12 +461,12 @@ void BankAccount::transfer()
 void BankAccount::displayBankAccountDetails()
 {
     char choice;
-    std::cout << "\n\t\tBANK ACCOUNT DETAILS\n************************************************\n\t\tName: " << name <<"\n\t\tAccount Number: "<<accountNumber<<"\n\t\tBalance: "<<balance<<"\n\t\tE-Mail ID: " << emailID << std::endl;
-    std::cout << "\n\tDo you want to view your account password (Y/N): ";
+    std::cout << newLine << "BANK ACCOUNT DETAILS" << drawLine << newLine << "Name: " << name << newLine << "Account Number: "<<accountNumber<< newLine << "Balance: "<<balance<< newLine << "E-Mail ID: " << emailID << std::endl;
+    std::cout << newLine << "Do you want to view your account password (Y/N): ";
     std::cin >> choice;
     if(choice=='Y'||choice=='y')
     {
-        std::cout << "\t\tPassword: " << password;
+        std::cout << newLine << "Password: " << password;
     }
     else
     {
@@ -454,13 +484,13 @@ void BankAccount::deleteAccount()
     bool successStatus = 0;
 
     char choice;
-    std::cout << "\nARE YOU SURE YOU WANT TO DELETE THE ACCOUNT?(Y/N): ";
+    std::cout << newLine << "ARE YOU SURE YOU WANT TO DELETE THE ACCOUNT?(Y/N): ";
     if(choice=='Y'||choice=='y')
     {
-        std::cout << "\nEnter account number again: ";
+        std::cout << newLine << "\nEnter account number again: ";
         std::cin >> accountNumberInput;
         deleteAccountInput.push_back(accountNumberInput);
-        std::cout << "Enter password: ";
+        std::cout << newLine << "Enter password: ";
         std::cin >> passwordInput;
         deleteAccountInput.push_back(passwordInput);
 
@@ -469,11 +499,11 @@ void BankAccount::deleteAccount()
         {
             findRowNumber(bankAccountDataBasefileName, accountNumberInput, 0);
             deleteRow(bankAccountDataBasefileName, rowNumberInput);
-            std::cout << "\nAccount successfully deleted.";
+            std::cout << newLine << drawLine << "\nAccount successfully deleted.";
         }
         else
         {
-            std::cout << "\nIncorrect Account number or password, please relogin.";
+            std::cout << newLine << drawLine <<"\nIncorrect Account number or password, please relogin.";
         }
 
         MenuObj.mainMenu();
@@ -493,14 +523,14 @@ void BankAccount::openStockMarketMainMenu()
     int choice;
     do
     {
-        std::cout << "\n\t\tSTOCK MARKET MENU\n************************************************\n\t\t1 - Open Stock Market Account\n\t\t2 - Enable Stock Market\n\t\t3 - Return to Bank Account\n\t\t4 - Logout\n\n\t\tEnter Choice: ";
+        std::cout << newLine << "STOCK MARKET MENU" << drawLine << newLine << "1 - Open Stock Market Account\n\t\t2 - Enable Stock Market\n\t\t3 - Return to Bank Account\n\t\t4 - Logout\n\n\t\tEnter Choice: ";
         std::cin >> choice;
         switch(choice)
         {
             case 1:
                 if(stockMarketAccountStatus)
                 {
-                    StockMarketAccObj.setStockMarketAccount(accountNumber);
+                    //StockMarketAccObj.setStockMarketAccount(accountNumber);
                     MenuObj.openStockMarket();
                 }
                 else
@@ -510,7 +540,7 @@ void BankAccount::openStockMarketMainMenu()
             break;
 
             case 2:
-            enableStockMarket();
+            stockMarketAccountStatus = StockMarketAccObj.enableStockMarket(currentAccountRow, accountNumber);
             std::cout << "\n\t\t## STOCK MARKET ENABLED ##\n";
             break;
 
@@ -522,39 +552,55 @@ void BankAccount::openStockMarketMainMenu()
 
 }
 
-void BankAccount::enableStockMarket()
+
+ //     STOCK MARKET FUNCTIONS
+
+int StockMarketAccount::enableStockMarket(int accountRowNumberInut, std::string accountNumberInput)
 {
     std::fstream file;
 
     changeDataItem(bankAccountDataBasefileName, "1\0", currentAccountRow, 3);
-    stockMarketAccountStatus = 1;
 
-    std::string enableSMTempFileName = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
-    file.open(enableSMTempFileName, std::ios::out);
+    accountNumber = accountNumberInput;
+    accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
+    
+    file.open(accountPortfolioFile, std::ios::out);
     if (!file.is_open()) 
     {
-        std::cerr << "\nError opening file1." << std::endl;
-        return;  
+        std::cerr << newLine << "\nError opening file1." << std::endl;
+        return 0;  
     }
+
+    file << "Symbol, Current Price, Today's Change, No. Of Shares, Total Value, Total Gain/Loss, Purchase Price" << std::endl;
 
     file.close();
 
-}
+    return 1;
 
-
- //     STOCK MARKET FUNCTIONS
-
-void StockMarketAccount::setStockMarketAccount(std::string accountNumberInput)
-{
-    accountNumber = accountNumberInput;
-    accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
 }
 
 //  STOCK MARKET ACCOUNT OPERATIONS
 
 void StockMarketAccount::showPortfolio()
 {
+    int numOfEntries = numberOfEntries(accountPortfolioFile);
+    std::vector<std::string> row;
 
+    if(numOfEntries == 0)
+    {
+        std::cout << newLine << "## NO SHARES OWNED ##\n";
+    }
+    else
+    {
+        for(int i = 1; i < numOfEntries; i++)
+        {
+            row = getRow(accountPortfolioFile, i);
+            std::cout<<"SYMBOL: " << row[0] << "\nDESCP: " << row[7] << "\nCURRENT PRICE: " << row[1] <<"\nTODAY'S CHANGE: " << row[2] << "\nNUMBER OF SHARES: " << row[3] << "\nTOTAL VALUE: " << row[4] << "\nPURCHASE";
+
+
+        }
+
+    }
 
 }
 
