@@ -354,8 +354,7 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
         }
 
     }   
-
-    std::cout << "\nGiven Input doesnt exist in the specified column in the database\n";
+    
     file.close();
     return 0;
 }
