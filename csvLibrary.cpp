@@ -359,10 +359,87 @@ int findRowNumber(std::string fileName, std::string stringInput, int columnNumbe
     return 0;
 }
 
+int findRowNumber(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput)
+{
+    int currentRowNumber = 0;
+    int currentColumnNumber = 0;
+    std::string row;
+    std::string column;
+    bool findSuccessStatus = 0;
+    bool skipFirstLine = 0;
+
+    std::fstream file;
+    file.open(fileName, std::ios::in);
+    if (!file.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return 0;  
+    }
+
+    int j = 0;
+    while(std::getline(file, row))
+    { 
+        currentColumnNumber = 0;
+
+        //Skips the header of the csv file
+        if(skipFirstLine == 0)
+        {
+            skipFirstLine = 1;
+            continue;
+        }
+
+        //Splits string line into distinct data items onto the stream 's'
+        std::stringstream s(row);
+
+        //Iterates through distinct data items separated by ',' items from stream 's' 
+        while(std::getline(s, column, ','))
+        {
+            //Checking if input values match
+            if(currentColumnNumber != columnNumberInput[j])
+            {
+                currentColumnNumber++;
+                continue;
+            }
+            else
+            {
+                if(column == columnInput[j])
+                {
+                    findSuccessStatus = 1;
+                    currentColumnNumber++;
+                    j++;
+                    continue;
+                }
+                else
+                {
+                    findSuccessStatus = 0;
+                    break; 
+                }
+            }
+            
+        }
+
+        if(findSuccessStatus)
+        {
+            file.close();
+            return currentRowNumber;
+        }
+        else
+        {
+            currentRowNumber++;
+            continue;
+        }
+
+    }   
+
+    file.close();
+    return 0;
+
+}
+
+
 //Finds if given data is present in a single row at the given column numbers
 bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput)
 {
-    int currentrowNumber = 0;
     int currentColumnNumber = 0;
     std::string row;
     std::string column;

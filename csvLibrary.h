@@ -11,5 +11,6 @@ std::vector<std::string> getRow(std::string fileName, int rowNumberInput);
 int findRowNumber(std::string fileName, std::string stringInput, int columnNumberInput);
 int numberOfEntries(std::string fileName);
 bool findIfInRow(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput);
+int findRowNumber(std::string fileName, std::vector<std::string> columnInput, std::vector<int> columnNumberInput);
 
 #endif
