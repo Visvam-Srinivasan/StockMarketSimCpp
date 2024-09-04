@@ -34,6 +34,29 @@ void addRow(std::string fileName, std::string rowItem[], int noOfColumns)
     file.close();
 }
 
+//Overloaded addRow with vector argument
+void addRow(std::string fileName, std::vector<std::string> rowItem, int noOfColumns)
+{
+    std::ofstream file;
+    file.open(fileName, std::ios::app);
+    if (!file.is_open()) 
+    {
+        std::cerr << "Error opening file." << std::endl;
+        return;  
+    }
+
+    file << std::endl;
+    for(int i = 0; i < noOfColumns; i++)
+    {
+        file << rowItem[i];
+        if(i == noOfColumns - 1)
+            break;
+        file << ",";
+    }
+
+    file.close();
+}
+
 void deleteRow(std::string fileName, int rowNumberInput)
 {
     std::string line;

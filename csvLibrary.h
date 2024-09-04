@@ -2,6 +2,7 @@
 #define csvLibrary
 
 void addRow(std::string fileName, std::string row[], int noOfColumns);
+void addRow(std::string fileName, std::vector<std::string> rowItem, int noOfColumns);
 void deleteRow(std::string fileName, int rowNumberInput);
 void changeDataItem(std::string fileName, std::string newStringInput, int rowNumberInput, int columnNumberInput);
 
