@@ -13,6 +13,7 @@
 
 #include "csvLibrary.h"
 
+
 //      DATABASE FILE NAMES
 
 std::string bankAccountDataBasefileName = "bankAccountDataBase.csv";
@@ -130,6 +131,15 @@ class StockMarketAccount
     }
     bool chkIfCanBuy(int);
     void addBuyOrder(int durationTypeInput, std::string symbolInput, int numOfSharesInput, std::string bidPrice, int limitInput, int tirggerInput);
+    void marketPriceRandomizer(int currentRowInput);
+    void deleteOrder(bool orderType, int orderNumber);
+    void matchOrders();
+    void clearOrdersNewDay();
+    void updateOrderDataBases();
+    void updatePortfolioAfterOrder(std::string, int, int);
+    void updatePortfolioAfterOrder(std::string, int , int, int);
+
+
 
 }StockMarketAccObj;
 
@@ -850,7 +860,181 @@ void StockMarketAccount::searchSymbolStockMarket()
 
 }
 
+void StockMarketAccount::matchOrders()
+{
+    std::vector<std::string> buyOrderRow;
+    std::vector<std::string> sellOrderRow;
 
+    std::vector<int> sellerOrdersCompleted;
+    std::vector<int> buyerOrdersCompleted;
+
+    int numberOfBuyOrders = numberOfEntries(buyOrderBookFile);
+    int numberOfSellOrders = numberOfEntries(sellOrderBookFile);
+    int numberOfSharesInSellerAccount;
+
+    int sharesPresentTotal = 0, sharesNeededTotal = 0;
+    int i = 0;
+
+    bool orderCompleteFlag = 0;
+
+    for(i = 1; i < numberOfBuyOrders; i++)
+    {
+        buyOrderRow = getRow(buyOrderBookFile, i);
+        sharesNeededTotal = stoi(buyOrderRow[6]);
+
+        for(int j = 1; j < numberOfSellOrders; j++)
+        {
+
+            sellOrderRow = getRow(sellOrderBookFile, j);
+            numberOfSharesInSellerAccount = stoi(sellOrderRow[6]);
+
+            if(buyOrderRow[4] == sellOrderRow[4] && buyOrderRow[5] == sellOrderRow[4])
+            {
+                //Condition where order is fulfilled completely
+                if(numberOfSharesInSellerAccount > (sharesNeededTotal - sharesPresentTotal))
+                {
+                    //Updates seller order and portfolio
+                    numberOfSharesInSellerAccount-=(sharesNeededTotal - sharesPresentTotal);
+                    changeDataItem(sellOrderBookFile, std::to_string(numberOfSharesInSellerAccount), j, 6);
+                    updatePortfolioAfterOrder(sellOrderRow[3], numberOfSharesInSellerAccount, 1, j);
+
+                    //Updates buyer order and portfolio
+                    deleteOrder(0, i);
+                    updatePortfolioAfterOrder(buyOrderRow[3], 0, i);
+
+                    orderCompleteFlag = 1;
+                    
+                }
+                else
+                {
+                    sharesPresentTotal += numberOfSharesInSellerAccount;
+                    deleteOrder(1, j);
+
+                }
+
+            }
+        }
+
+        if(orderCompleteFlag)
+        {
+            continue;
+        }
+        //If partial fulfillment of buy order
+        else
+        {
+            //If no shares sold - market bot is called
+            if(sharesPresentTotal == 0)
+            {
+
+            }
+            else
+            {
+                changeDataItem(sellOrderBookFile, std::to_string(sharesNeededTotal - sharesPresentTotal), i, 6);
+                updatePortfolioAfterOrder(buyOrderRow[3], sharesPresentTotal, 0, i);
+            }
+
+        }
+
+
+
+    }
+
+
+}
+
+
+void StockMarketAccount::deleteOrder(bool orderType, int orderNumber)
+{
+
+    if(orderType)
+    {
+        deleteRow(sellOrderBookFile, orderNumber);
+    }
+    else
+    {
+        deleteRow(buyOrderBookFile, orderNumber);
+    }
+
+}
+
+//Updates portfolio when no splitting of order
+void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumber, int orderType, int orderNumber) 
+{
+    std::string portfolioFileNameUpdate = accountNumber + "Portfolio.csv";
+    std::vector<std::string> rowItemToFind;
+    std::vector<int> columnNumber;
+
+    columnNumber.push_back(4);
+    columnNumber.push_back(5);
+    rowItemToFind.push_back(std::to_string(orderType));
+    rowItemToFind.push_back(std::to_string(orderNumber));
+
+    int rowNumber = findRowNumber(portfolioFileNameUpdate, rowItemToFind, columnNumber);
+    changeDataItem(portfolioFileNameUpdate, "1\0",rowNumber,0);
+    changeDataItem(portfolioFileNameUpdate, "0\0", rowNumber, 5);
+ 
+}
+
+//Updates portfolio when order is to be split
+void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumber, int newNumberOfSharesInOrder, int orderType, int orderNumber) 
+{
+    std::string portfolioFileNameUpdate = accountNumber + "Portfolio.csv";
+    std::vector<std::string> rowItemToFind;
+    std::vector<int> columnNumber;
+
+    std::vector<std::string> rowItemInPort;
+
+    columnNumber.push_back(4);
+    columnNumber.push_back(5);
+    rowItemToFind.push_back(std::to_string(orderType));
+    rowItemToFind.push_back(std::to_string(orderNumber));
+
+    int rowNumber = findRowNumber(portfolioFileNameUpdate, rowItemToFind, columnNumber);
+
+    //Gets row before order changed
+    rowItemInPort = getRow(portfolioFileNameUpdate, rowNumber);
+
+    //Updates partially fulfilled order
+    int totalNumberOfShares = stoi(getDataItem(portfolioFileNameUpdate, rowNumber, 2));
+    changeDataItem(portfolioFileNameUpdate, "1\0",rowNumber,0);
+    changeDataItem(portfolioFileNameUpdate, std::to_string(newNumberOfSharesInOrder),rowNumber,0);
+
+    //Adds new order that is unfulfilled
+    rowItemInPort[3] = std::to_string(stoi(rowItemInPort[3]) - newNumberOfSharesInOrder);
+    addRow(portfolioFileNameUpdate, rowItemInPort,5);
+}
+
+
+
+void StockMarketAccount::clearOrdersNewDay(){}
+void StockMarketAccount::updateOrderDataBases(){}
+
+
+void StockMarketAccount::marketPriceRandomizer(int currentRowInput)
+{
+    int min = 1, max = 10000;
+    int currentMarketPrice = stoi(getDataItem(companyInfoDBFile, currentRowInput, 1)); 
+
+    int randomNum = min + (rand() % (max - min + 1));
+    if(randomNum%97==0)
+    {
+        //simulateBullMarket();
+
+    }
+    else if(randomNum%101)
+    {
+        //simulateBearMarket();
+    }
+    else if(randomNum%21==0)
+    {
+        currentMarketPrice++;
+    }
+    else if(randomNum%23==0)
+    {
+        currentMarketPrice--;
+    }
+
+}
 
 
 
