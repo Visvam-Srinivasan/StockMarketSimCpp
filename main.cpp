@@ -13,6 +13,11 @@
 
 #include "csvLibrary.h"
 
+//      CONSTANTS
+
+int const colNums = 7;
+int const numOfCompanies = 5;
+char bufferChar;    //To handle string inputs with space
 
 //      DATABASE FILE NAMES
 
@@ -21,11 +26,6 @@ std::string sellOrderBookFile = "stockMarketDataBases\\sellOrderBook.csv";
 std::string buyOrderBookFile = "stockMarketDataBases\\buyOrderBook.csv";
 std::string companyInfoDBFile = "stockMarketDataBases\\companyShareData\\comapanyInfo.csv";
 std::string companyMarkPriceHistoryFile = "stockMarketDataBases\\companyShareData\\companyMarketPriceHistory.csv";
-
-int const colNums = 7;
-int const numOfCompanies = 5;
-
-char bufferChar;
  
 //      CONSOLE OUTPUT FORMATTERS
 
@@ -47,7 +47,7 @@ std::ostream &drawLine(std::ostream &output)
     return output;
 }
 
-
+//      CLASSES
 
 class Menu
 {
@@ -102,7 +102,7 @@ class BankAccount
         void deleteAccount();
 
         //Opening and enabling stock market for account
-        void openStockMarketMainMenu();
+        void checkIfStockMarketEnabled();
 
 
 
@@ -128,9 +128,10 @@ class StockMarketAccount
     {
         balanceSM = balanceInput;
         accountNumber = accountNumberInput;
+        accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
     }
     bool chkIfCanBuy(int);
-    void addBuyOrder(int durationTypeInput, std::string symbolInput, int numOfSharesInput, std::string bidPrice, int limitInput, int tirggerInput);
+    void addOrderToBookAndPortfolio(int, int durationTypeInput, std::string symbolInput, int numOfSharesInput, std::string bidPrice, int limitInput, int tirggerInput);
     void marketPriceRandomizer(int currentRowInput);
     void deleteOrder(bool orderType, int orderNumber);
     void matchOrders();
@@ -138,11 +139,15 @@ class StockMarketAccount
     void updateOrderDataBases();
     void updatePortfolioAfterOrder(std::string, int, int);
     void updatePortfolioAfterOrder(std::string, int , int, int);
+    void updateMarketPriceAfterOrder(std::string, std::string);
 
 
 
 }StockMarketAccObj;
 
+std::string getSystemTime();
+
+//      MAIN
 
 int main()
 {
@@ -186,7 +191,7 @@ void Menu::bankAccountMenu()
         {
 
             case 1:
-            BankAccObj.openStockMarketMainMenu();
+            BankAccObj.checkIfStockMarketEnabled();
             break;
 
             case 2:
@@ -231,6 +236,10 @@ void Menu::openStockMarketMenu()
 
             case 1:
             StockMarketAccObj.showPortfolio();
+            break;
+
+            case 2:
+            MenuObj.placeOrderStockMarketMenu();
             break;
 
             case 4:
@@ -283,6 +292,7 @@ void Menu::placeOrderStockMarketMenu()
 
 
 }
+
 
 //      BANK ACCOUNT FUNCTIONS
 
@@ -577,39 +587,39 @@ void BankAccount::deleteAccount()
 
 //  STOCK MARKET OPENING FOR BANK ACCOUNT
 
-void BankAccount::openStockMarketMainMenu()
+void BankAccount::checkIfStockMarketEnabled()
 {
-    int choice;
-    do
+    char choice;
+    if(stockMarketAccountStatus)
     {
-        std::cout << newLineHeader << "STOCK MARKET MENU" << drawLine << newLineBody << "1 - Open Stock Market Account" << newLineBody << "2 - Enable Stock Market" << newLineBody << "3 - Return to Bank Account" << newLineBody << "4 - Logout" << std::endl << newLineBody << "Enter Choice: ";
-        std::cin >> choice;
-        switch(choice)
-        {
-            case 1:
-                if(stockMarketAccountStatus)
-                {
-                    //StockMarketAccObj.setStockMarketAccount(accountNumber);
-                    StockMarketAccObj.setData(balance, accountNumber);
-                    MenuObj.openStockMarketMenu();
-                }
-                else
-                {
-                    std::cout << "\n\t\t!! You have not enabled the stock market for your bank account.\n\t\t!! Please Enable it to open the market!!\n";
-                }
-            break;
+        //StockMarketAccObj.setStockMarketAccount(accountNumber);
+        StockMarketAccObj.setData(balance, accountNumber);
+        MenuObj.openStockMarketMenu();
+    }
+    else
+    {
+        std::cout << "\n\t\t!! You have not enabled the stock market for your bank account.\n\t\tDo you wish to enable stock market for your account? (Y/N): ";
+        do
+        {            
+            std::cin >> choice;
+            if(choice == 'Y' || choice == 'y')
+            {
+                StockMarketAccObj.enableStockMarket(currentAccountRow, accountNumber);
+                StockMarketAccObj.setData(balance, accountNumber);
+                std::cout << newLineBody << "# STOCK MARKET ENABLED #";
+                MenuObj.openStockMarketMenu();
+            }
+            else if(choice == 'N' || choice == 'n')
+            {   
+                MenuObj.bankAccountMenu();
+            }
+            else
+            {
+            std::cout << newLineBody << "!! INVALID INPUT TRY AGAIN !!\n";
+            }
 
-            case 2:
-            stockMarketAccountStatus = StockMarketAccObj.enableStockMarket(currentAccountRow, accountNumber);
-            StockMarketAccObj.setData(balance, accountNumber);
-            std::cout << "\n\t\t## STOCK MARKET ENABLED ##\n";
-            break;
-
-            case 3:
-            MenuObj.bankAccountMenu();
-            break;
-        }
-    }while(choice<4);
+        }while(choice != 'Y' || choice != 'y' || choice != 'N' || choice != 'n');
+    }
 
 }
 
@@ -620,7 +630,7 @@ int StockMarketAccount::enableStockMarket(int accountRowNumberInut, std::string 
 {
     std::fstream file;
 
-    changeDataItem(bankAccountDataBasefileName, "1\0", currentAccountRow, 3);
+    changeDataItem(bankAccountDataBasefileName, "1\0", accountRowNumberInut, 3);
 
     accountNumber = accountNumberInput;
     accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
@@ -632,7 +642,7 @@ int StockMarketAccount::enableStockMarket(int accountRowNumberInut, std::string 
         return 0;  
     }
 
-    file << "Symbol, No. Of Shares, Purchase Price, Order Status";
+    file << "Order Status, Symbol, No. Of Shares, Purchase Price, Order Type(B-0 & S-1), Order Number";
 
     file.close();
 
@@ -674,14 +684,15 @@ void StockMarketAccount::placeOrderMenuStockMarket()
 
     std::cout << newLineBody << "Enter Symbol: ";
     std::cin >> symbolInput;
-    findRowNumber(companyInfoDBFile, symbolInput, 0);
+    rowNumberOfSymbol = findRowNumber(companyInfoDBFile, symbolInput, 0);
+    //Exception handling when symbol is not present
     do
     {
         std::cout << newLineBody << "Select Action (B - buy/S - Sell): ";
         std::cin >> actionInput;
         if(actionInput == 'B' || actionInput == 'b')
         {
-
+            buySharesStockMarket(symbolInput, rowNumberOfSymbol);
         }
         else if(actionInput == 'S' || actionInput == 's')
         {
@@ -694,135 +705,6 @@ void StockMarketAccount::placeOrderMenuStockMarket()
 
     }while(actionInput != 'B' || actionInput != 'b' || actionInput != 'S' || actionInput != 's');
     
-
-}
-
-void StockMarketAccount::buySharesStockMarket(std::string symbolInput, int symbolRowNumberInput)
-{
-    int choice;
-    int numberOfShares;
-    int durationType;
-    int limitPrice;
-    int triggerPrice;
-
-    std::string currentMarketPriceString = getDataItem(companyInfoDBFile, symbolRowNumberInput, 1);
-    int currentMarketPrice = stoi(currentMarketPriceString);
-    do
-    {
-        std::cout << newLineHeader << "BUYING " << symbolInput << drawLine << newLineBody << "Choose Order Type: " << newLineBody << "1 - Market Price Order" << newLineBody << "2 - Limit Order" << newLineBody << "3 - Stop Limit Order" << newLineBody << "\nEnter Choice: ";  
-        std::cin >> choice;
-        switch(choice)
-        {
-            case 1:
-            std::cout << newLineBody << "Current Market Price: " << currentMarketPrice << newLineBody << "Enter number of Shares: "; 
-            std::cin >> numberOfShares;
-            std::cout << newLineBody << "Choose duration (0 - Day/1 - Good Unitl cancelled): " << durationType;
-            if(chkIfCanBuy(currentMarketPrice*numberOfShares))
-            {
-                balanceSM-=currentMarketPrice*numberOfShares;
-
-                addBuyOrder(durationType, symbolInput, numberOfShares, currentMarketPriceString, 0, -1);
-
-                //Change only when order is a success
-                changeDataItem(bankAccountDataBasefileName, std::to_string(balanceSM), currentAccountRow, 2);
-                break;
-            }
-            else
-            {
-                break;
-            }
-
-            case 2:
-            std::cout << newLineBody << "Current Market Price: " << currentMarketPrice << newLineBody << "Enter limit price: "; 
-            std::cin >> limitPrice;
-            std::cout << newLineBody << "Enter number of shares: ";
-            std::cin >> numberOfShares;
-            std::cout << newLineBody << "Choose duration (0 - Day/1 - Good Unitl cancelled): " << durationType;
-            if(chkIfCanBuy(limitPrice*numberOfShares))
-            {
-                balanceSM-=currentMarketPrice*numberOfShares;
-
-                addBuyOrder(durationType, symbolInput, numberOfShares, std::to_string(limitPrice), 1, -1);
-
-                //Change only when order is a success
-                changeDataItem(bankAccountDataBasefileName, std::to_string(balanceSM), currentAccountRow, 2);
-                break;
-            }
-            else
-            {
-                break;
-            }
-
-            case 3:
-            std::cout << newLineBody << "Current Market Price: " << currentMarketPrice << newLineBody << "Enter limit price: "; 
-            std::cin >> limitPrice;
-            std::cout << newLineBody << "Enter trigger price: ";
-            std::cin >> triggerPrice;           
-            std::cout << newLineBody << "Enter number of shares: ";
-            std::cin >> numberOfShares;
-            std::cout << newLineBody << "Choose duration (0 - Day/1 - Good Unitl cancelled): " << durationType;
-            if(chkIfCanBuy(limitPrice*numberOfShares))
-            {
-                balanceSM-=currentMarketPrice*numberOfShares;
-
-                addBuyOrder(durationType, symbolInput, numberOfShares, std::to_string(limitPrice), 1, triggerPrice);
-
-                //Change only when order is a success
-                changeDataItem(bankAccountDataBasefileName, std::to_string(balanceSM), currentAccountRow, 2);
-                break;
-            }
-            else
-            {
-                break;
-            }
-
-
-        }
-
-    }while(choice<5);
-
-}
-
-bool StockMarketAccount::chkIfCanBuy(int amount)
-{   
-    if(amount>balanceSM)
-    {
-        std::cout << newLineBody << "Total cost exceeds balance\n";
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
-
-}
-
-std::string getSystemTime();
-
-void StockMarketAccount::addBuyOrder(int durationTypeInput, std::string symbolInput, int numOfSharesInput, std::string bidPrice, int limitInput, int tirggerInput)
-{
-    std::string orderData[9];
-    std::string orderInfoToPortfolio[4];
-
-    //Add data to order book
-    std::string orderNumber = std::to_string(stoi(getDataItem(buyOrderBookFile, numberOfEntries(buyOrderBookFile), 0)) + 1);
-    orderData[0] = orderNumber;
-    orderData[1] = std::to_string(durationTypeInput);
-    orderData[2] = accountNumber;
-    orderData[3] = symbolInput;
-    orderData[4] = std::to_string(numOfSharesInput);
-    orderData[5] = bidPrice;
-    orderData[6] = std::to_string(limitInput);
-    orderData[7] = std::to_string(tirggerInput);
-    orderData[8] = getSystemTime();
-    addRow(buyOrderBookFile, orderData, 9);
-
-    //Add order to portfolio
-    orderInfoToPortfolio[0] = symbolInput;
-    orderInfoToPortfolio[1] = std::to_string(numOfSharesInput);
-    orderInfoToPortfolio[2] = bidPrice;
-    orderInfoToPortfolio[3] = "0\0";
-    addRow(accountPortfolioFile, orderInfoToPortfolio, 4);
 
 }
 
@@ -860,6 +742,166 @@ void StockMarketAccount::searchSymbolStockMarket()
 
 }
 
+//  BUY STOCKS FUNCTIONS
+
+void StockMarketAccount::buySharesStockMarket(std::string symbolInput, int symbolRowNumberInput)
+{
+    int choice;
+    int numberOfShares;
+    int durationType;
+    int limitPrice = 0;
+    int triggerPrice = 0;
+
+    std::string currentMarketPriceString = getDataItem(companyInfoDBFile, symbolRowNumberInput, 1);
+    int currentMarketPrice = stoi(currentMarketPriceString);
+    do
+    {
+        std::cout << newLineHeader << "BUYING " << symbolInput << drawLine << newLineBody << "Choose Order Type: " << newLineBody << "1 - Market Price Order" << newLineBody << "2 - Limit Order" << newLineBody << "3 - Stop Limit Order" << newLineBody << "4 - Leave Menu" << newLineBody << newLineBody << "Enter Choice: ";  
+        std::cin >> choice;
+        switch(choice)
+        {
+            case 1:
+                std::cout << newLineBody << "Current Market Price: " << currentMarketPrice << newLineBody << "Enter number of Shares: "; 
+                std::cin >> numberOfShares;
+                std::cout << newLineBody << "Choose duration (0 - Day/1 - Good Unitl cancelled): ";
+                std::cin >> durationType;
+                if(chkIfCanBuy(currentMarketPrice*numberOfShares))
+                {
+                    balanceSM-=currentMarketPrice*numberOfShares;
+
+                    addOrderToBookAndPortfolio(0, durationType, symbolInput, numberOfShares, currentMarketPriceString, 0, -1);
+
+                    //Change only when order is a success
+                    changeDataItem(bankAccountDataBasefileName, std::to_string(balanceSM), currentAccountRow, 2);
+                    break;
+                }
+                else
+                {
+                    break;
+                }
+
+            case 2:
+                std::cout << newLineBody << "Current Market Price: " << currentMarketPrice << newLineBody << "Enter limit price: "; 
+                std::cin >> limitPrice;
+                std::cout << newLineBody << "Enter number of shares: ";
+                std::cin >> numberOfShares;
+                std::cout << newLineBody << "Choose duration (0 - Day/1 - Good Unitl cancelled): " << durationType;
+                if(chkIfCanBuy(limitPrice*numberOfShares))
+                {
+                    balanceSM-=currentMarketPrice*numberOfShares;
+
+                    addOrderToBookAndPortfolio(0, durationType, symbolInput, numberOfShares, std::to_string(limitPrice), 1, -1);
+
+                    //Change only when order is a success
+                    changeDataItem(bankAccountDataBasefileName, std::to_string(balanceSM), currentAccountRow, 2);
+                    break;
+                }   
+                else
+                {
+                    break;
+                }
+
+            case 3:
+                std::cout << newLineBody << "Current Market Price: " << currentMarketPrice << newLineBody << "Enter limit price: "; 
+                std::cin >> limitPrice;
+                std::cout << newLineBody << "Enter trigger price: ";
+                std::cin >> triggerPrice;           
+                std::cout << newLineBody << "Enter number of shares: ";
+                std::cin >> numberOfShares;
+                std::cout << newLineBody << "Choose duration (0 - Day/1 - Good Unitl cancelled): " << durationType;
+                if(chkIfCanBuy(limitPrice*numberOfShares))
+                {
+                    balanceSM-=currentMarketPrice*numberOfShares;
+
+                    addOrderToBookAndPortfolio(0, durationType, symbolInput, numberOfShares, std::to_string(limitPrice), 1, triggerPrice);
+
+                    //Change only when order is a success
+                    changeDataItem(bankAccountDataBasefileName, std::to_string(balanceSM), currentAccountRow, 2);
+                    break;
+                }   
+                else
+                {
+                    break;
+                }
+
+            case 4:
+                matchOrders();
+                break;
+
+
+        }
+
+    }while(choice<5);
+
+}
+
+bool StockMarketAccount::chkIfCanBuy(int amount)
+{   
+    if(amount>balanceSM)
+    {
+        std::cout << newLineBody << "Total cost exceeds balance\n";
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+
+}
+
+void StockMarketAccount::addOrderToBookAndPortfolio(int orderType, int durationTypeInput, std::string symbolInput, int numOfSharesInput, std::string bidPrice, int limitInput, int tirggerInput)
+{
+    std::string orderData[9];
+    std::string orderInfoToPortfolio[6];
+
+    //Add data to order book
+    std::string orderNumber = std::to_string(numberOfEntries(buyOrderBookFile) + 1);
+    if(!limitInput)
+    {
+        orderData[0] = "0\0";
+    }
+    else
+    {
+        orderData[0] = "-1\0";
+    }
+    orderData[1] = orderNumber;
+    orderData[2] = std::to_string(durationTypeInput);
+    orderData[3] = accountNumber;
+    orderData[4] = symbolInput;
+    orderData[5] = std::to_string(numOfSharesInput);
+    orderData[6] = bidPrice;
+    orderData[7] = std::to_string(limitInput);
+    orderData[8] = std::to_string(tirggerInput);
+    orderData[9] = getSystemTime();
+    if(orderType)
+    {
+        addRow(sellOrderBookFile, orderData, 10);
+    }
+    else
+    {
+        addRow(buyOrderBookFile, orderData, 10);
+    }
+
+    //Add order to portfolio
+    orderInfoToPortfolio[0] = "0\0";
+    orderInfoToPortfolio[1] = symbolInput;
+    orderInfoToPortfolio[2] = std::to_string(numOfSharesInput);
+    orderInfoToPortfolio[3] = bidPrice;
+    orderInfoToPortfolio[4] = std::to_string(durationTypeInput);
+    if(orderType)
+    {
+        orderInfoToPortfolio[5] = "1\0";
+    }
+    else
+    {
+        orderInfoToPortfolio[5] = "0\0";
+    }
+    addRow(accountPortfolioFile, orderInfoToPortfolio, 4);
+
+}
+
+//  ORDER MATCHING FUNCTIONS
+
 void StockMarketAccount::matchOrders()
 {
     std::vector<std::string> buyOrderRow;
@@ -870,34 +912,45 @@ void StockMarketAccount::matchOrders()
 
     int numberOfBuyOrders = numberOfEntries(buyOrderBookFile);
     int numberOfSellOrders = numberOfEntries(sellOrderBookFile);
-    int numberOfSharesInSellerAccount;
 
+    int numberOfSharesInSellerAccount = 0;
     int sharesPresentTotal = 0, sharesNeededTotal = 0;
-    int i = 0;
 
     bool orderCompleteFlag = 0;
 
-    for(i = 1; i < numberOfBuyOrders; i++)
+    //Goes through all buy orders
+    int i = 0;
+    for(i = 1; i <= numberOfBuyOrders; i++)
     {
         buyOrderRow = getRow(buyOrderBookFile, i);
-        sharesNeededTotal = stoi(buyOrderRow[6]);
 
-        for(int j = 1; j < numberOfSellOrders; j++)
+        //Skips orders with limits and triggers
+        if(buyOrderRow[0] == "-1\0")
+        {
+            continue;
+        }
+
+        sharesNeededTotal = stoi(buyOrderRow[5]);
+
+        //Goes through all sell orders
+        for(int j = 1; j <= numberOfSellOrders; j++)
         {
 
             sellOrderRow = getRow(sellOrderBookFile, j);
-            numberOfSharesInSellerAccount = stoi(sellOrderRow[6]);
+            numberOfSharesInSellerAccount = stoi(sellOrderRow[5]);
 
-            if(buyOrderRow[4] == sellOrderRow[4] && buyOrderRow[5] == sellOrderRow[4])
+            //Checks if exact match is present
+            if(buyOrderRow[4] == sellOrderRow[4] && buyOrderRow[6] == sellOrderRow[6])
             {
-                //Condition where order is fulfilled completely
+                //Condition where buy order is fulfilled completely
                 if(numberOfSharesInSellerAccount > (sharesNeededTotal - sharesPresentTotal))
                 {
                     //Updates seller order and portfolio
                     numberOfSharesInSellerAccount-=(sharesNeededTotal - sharesPresentTotal);
-                    changeDataItem(sellOrderBookFile, std::to_string(numberOfSharesInSellerAccount), j, 6);
-                    updatePortfolioAfterOrder(sellOrderRow[3], numberOfSharesInSellerAccount, 1, j);
+                    changeDataItem(sellOrderBookFile, std::to_string(numberOfSharesInSellerAccount), j, 5 );
 
+                    updatePortfolioAfterOrder(sellOrderRow[3], numberOfSharesInSellerAccount, 1, j);
+ 
                     //Updates buyer order and portfolio
                     deleteOrder(0, i);
                     updatePortfolioAfterOrder(buyOrderRow[3], 0, i);
@@ -917,6 +970,8 @@ void StockMarketAccount::matchOrders()
 
         if(orderCompleteFlag)
         {
+            //No need to update if it is market price order
+            updateMarketPriceAfterOrder(buyOrderRow[4], buyOrderRow[6]);
             continue;
         }
         //If partial fulfillment of buy order
@@ -929,7 +984,7 @@ void StockMarketAccount::matchOrders()
             }
             else
             {
-                changeDataItem(sellOrderBookFile, std::to_string(sharesNeededTotal - sharesPresentTotal), i, 6);
+                changeDataItem(buyOrderBookFile, std::to_string(sharesNeededTotal - sharesPresentTotal), i, 5);
                 updatePortfolioAfterOrder(buyOrderRow[3], sharesPresentTotal, 0, i);
             }
 
@@ -941,7 +996,6 @@ void StockMarketAccount::matchOrders()
 
 
 }
-
 
 void StockMarketAccount::deleteOrder(bool orderType, int orderNumber)
 {
@@ -958,9 +1012,9 @@ void StockMarketAccount::deleteOrder(bool orderType, int orderNumber)
 }
 
 //Updates portfolio when no splitting of order
-void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumber, int orderType, int orderNumber) 
+void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInput, int orderType, int orderNumber) 
 {
-    std::string portfolioFileNameUpdate = accountNumber + "Portfolio.csv";
+    std::string portfolioFileNameForUpdate = "stockMarketDataBases\\portfolios\\" + accountNumberInput + "Portfolio.csv";
     std::vector<std::string> rowItemToFind;
     std::vector<int> columnNumber;
 
@@ -969,16 +1023,17 @@ void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumber, in
     rowItemToFind.push_back(std::to_string(orderType));
     rowItemToFind.push_back(std::to_string(orderNumber));
 
-    int rowNumber = findRowNumber(portfolioFileNameUpdate, rowItemToFind, columnNumber);
-    changeDataItem(portfolioFileNameUpdate, "1\0",rowNumber,0);
-    changeDataItem(portfolioFileNameUpdate, "0\0", rowNumber, 5);
+    int rowNumber = findRowNumber(portfolioFileNameForUpdate, rowItemToFind, columnNumber);
+    std::cout << "ROW NUMBER OF BUYER: " << rowNumber;
+    changeDataItem(portfolioFileNameForUpdate, "1\0", rowNumber, 0);
+    changeDataItem(portfolioFileNameForUpdate, "0\0", rowNumber, 5);
  
 }
 
 //Updates portfolio when order is to be split
-void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumber, int newNumberOfSharesInOrder, int orderType, int orderNumber) 
+void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInput, int newNumberOfSharesInOrder, int orderType, int orderNumber) 
 {
-    std::string portfolioFileNameUpdate = accountNumber + "Portfolio.csv";
+    std::string portfolioFileNameForUpdate = "stockMarketDataBases\\portfolios\\" + accountNumberInput + "Portfolio.csv";
     std::vector<std::string> rowItemToFind;
     std::vector<int> columnNumber;
 
@@ -989,21 +1044,29 @@ void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumber, in
     rowItemToFind.push_back(std::to_string(orderType));
     rowItemToFind.push_back(std::to_string(orderNumber));
 
-    int rowNumber = findRowNumber(portfolioFileNameUpdate, rowItemToFind, columnNumber);
+    int rowNumber = findRowNumber(portfolioFileNameForUpdate, rowItemToFind, columnNumber);
+    if(!rowNumber){
+        std::cout << "\nNo order in port";
+    }
 
     //Gets row before order changed
-    rowItemInPort = getRow(portfolioFileNameUpdate, rowNumber);
+    rowItemInPort = getRow(portfolioFileNameForUpdate, rowNumber);
 
-    //Updates partially fulfilled order
-    int totalNumberOfShares = stoi(getDataItem(portfolioFileNameUpdate, rowNumber, 2));
-    changeDataItem(portfolioFileNameUpdate, "1\0",rowNumber,0);
-    changeDataItem(portfolioFileNameUpdate, std::to_string(newNumberOfSharesInOrder),rowNumber,0);
+    //Updates order to new order
+    changeDataItem(portfolioFileNameForUpdate, "0\0",rowNumber,0);
+    changeDataItem(portfolioFileNameForUpdate, "0\0", rowNumber, 5);
+    changeDataItem(portfolioFileNameForUpdate, std::to_string(newNumberOfSharesInOrder),rowNumber,2);
 
-    //Adds new order that is unfulfilled
-    rowItemInPort[3] = std::to_string(stoi(rowItemInPort[3]) - newNumberOfSharesInOrder);
-    addRow(portfolioFileNameUpdate, rowItemInPort,5);
+    //Adds partially fullfilled order
+    rowItemInPort[0] = "1\0";
+    rowItemInPort[2] = std::to_string(stoi(rowItemInPort[2]) - newNumberOfSharesInOrder);
+    addRow(portfolioFileNameForUpdate, rowItemInPort, 6);
 }
 
+void StockMarketAccount::updateMarketPriceAfterOrder(std::string symbolInput, std::string newMarketPrice)
+{
+    changeDataItem(companyInfoDBFile, newMarketPrice, findRowNumber(companyInfoDBFile, symbolInput, 0), 1);
+}
 
 
 void StockMarketAccount::clearOrdersNewDay(){}
