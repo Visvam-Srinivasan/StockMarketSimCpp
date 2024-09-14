@@ -21,11 +21,11 @@ char bufferChar;    //To handle string inputs with space
 
 //      DATABASE FILE NAMES
 
-std::string bankAccountDataBasefileName = "bankAccountDataBase.csv";
-std::string sellOrderBookFile = "stockMarketDataBases\\sellOrderBook.csv";
-std::string buyOrderBookFile = "stockMarketDataBases\\buyOrderBook.csv";
-std::string companyInfoDBFile = "stockMarketDataBases\\companyShareData\\comapanyInfo.csv";
-std::string companyMarkPriceHistoryFile = "stockMarketDataBases\\companyShareData\\companyMarketPriceHistory.csv";
+const std::string bankAccountDataBasefileName = "bankAccountDataBase.csv";
+const std::string sellOrderBookFile = "stockMarketDataBases\\sellOrderBook.csv";
+const std::string buyOrderBookFile = "stockMarketDataBases\\buyOrderBook.csv";
+const std::string companyInfoDBFile = "stockMarketDataBases\\companyShareData\\comapanyInfo.csv";
+const std::string companyMarkPriceHistoryFile = "stockMarketDataBases\\companyShareData\\companyMarketPriceHistory.csv";
  
 //      CONSOLE OUTPUT FORMATTERS
 
@@ -111,6 +111,7 @@ class BankAccount
 class StockMarketAccount
 {
     std::string accountNumber;
+    std::string accountOrdersFile;
     std::string accountPortfolioFile;
     int currentAccountRow;
     int balanceSM;
@@ -128,7 +129,8 @@ class StockMarketAccount
     {
         balanceSM = balanceInput;
         accountNumber = accountNumberInput;
-        accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
+        accountOrdersFile = "stockMarketDataBases\\orders\\" + accountNumber + "Orders.csv";
+        accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolios.csv";
     }
     bool chkIfCanBuy(int);
     void addOrderToBookAndPortfolio(int, int durationTypeInput, std::string symbolInput, int numOfSharesInput, std::string bidPrice, int limitInput, int tirggerInput);
@@ -140,6 +142,8 @@ class StockMarketAccount
     void updatePortfolioAfterOrder(std::string, int, int);
     void updatePortfolioAfterOrder(std::string, int , int, int);
     void updateMarketPriceAfterOrder(std::string, std::string);
+    void StockMarketAccount::deletePortfolio();
+
 
 
 
@@ -633,18 +637,26 @@ int StockMarketAccount::enableStockMarket(int accountRowNumberInut, std::string 
     changeDataItem(bankAccountDataBasefileName, "1\0", accountRowNumberInut, 3);
 
     accountNumber = accountNumberInput;
-    accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
-    
-    file.open(accountPortfolioFile, std::ios::out);
+    accountOrdersFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
+    file.open(accountOrdersFile, std::ios::out);
     if (!file.is_open()) 
     {
         std::cerr << newLineBody << "\nError opening file1." << std::endl;
         return 0;  
     }
-
     file << "Order Status, Symbol, No. Of Shares, Purchase Price, Order Type(B-0 & S-1), Order Number";
-
     file.close();
+
+    accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolios.csv";
+    file.open(accountPortfolioFile, std::ios::out);
+    if (!file.is_open()) 
+    {
+        std::cerr << newLineBody << "\nError opening file." << std::endl;
+        return 0;  
+    }
+    file << "Order Status, Symbol, No. Of Shares, Purchase Price, Order Type(B-0 & S-1), Order Number";
+    file.close();
+
 
     return 1;
 
@@ -654,7 +666,7 @@ int StockMarketAccount::enableStockMarket(int accountRowNumberInut, std::string 
 
 void StockMarketAccount::showPortfolio()
 {
-    int numOfEntries = numberOfEntries(accountPortfolioFile);
+    int numOfEntries = numberOfEntries(accountOrdersFile);
     std::vector<std::string> row;
 
     if(numOfEntries == 0)
@@ -665,8 +677,14 @@ void StockMarketAccount::showPortfolio()
     {
         for(int i = 1; i < numOfEntries; i++)
         {
-            row = getRow(accountPortfolioFile, i);
-            std::cout<<"SYMBOL: " << row[0] << "\nDESCP: " << row[7] << "\nCURRENT PRICE: " << row[1] <<"\nTODAY'S CHANGE: " << row[2] << "\nNUMBER OF SHARES: " << row[3] << "\nTOTAL VALUE: " << row[4] << "\nPURCHASE";
+            row = getRow(accountOrdersFile, i);
+
+            //Order not placed yet
+            if(row[0] == "0/0"){
+                continue;
+            }
+
+            std::cout << newLineBody << "PORTFOLIO" << drawLine << newLineBody;
 
 
         }
@@ -896,7 +914,7 @@ void StockMarketAccount::addOrderToBookAndPortfolio(int orderType, int durationT
     {
         orderInfoToPortfolio[5] = "0\0";
     }
-    addRow(accountPortfolioFile, orderInfoToPortfolio, 4);
+    addRow(accountOrdersFile, orderInfoToPortfolio, 4);
 
 }
 
@@ -1024,7 +1042,7 @@ void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInpu
     rowItemToFind.push_back(std::to_string(orderNumber));
 
     int rowNumber = findRowNumber(portfolioFileNameForUpdate, rowItemToFind, columnNumber);
-    std::cout << "ROW NUMBER OF BUYER: " << rowNumber;
+    //std::cout << "ROW NUMBER OF BUYER: " << rowNumber;
     changeDataItem(portfolioFileNameForUpdate, "1\0", rowNumber, 0);
     changeDataItem(portfolioFileNameForUpdate, "0\0", rowNumber, 5);
  
@@ -1047,6 +1065,7 @@ void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInpu
     int rowNumber = findRowNumber(portfolioFileNameForUpdate, rowItemToFind, columnNumber);
     if(!rowNumber){
         std::cout << "\nNo order in port";
+        return;
     }
 
     //Gets row before order changed
@@ -1054,7 +1073,6 @@ void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInpu
 
     //Updates order to new order
     changeDataItem(portfolioFileNameForUpdate, "0\0",rowNumber,0);
-    changeDataItem(portfolioFileNameForUpdate, "0\0", rowNumber, 5);
     changeDataItem(portfolioFileNameForUpdate, std::to_string(newNumberOfSharesInOrder),rowNumber,2);
 
     //Adds partially fullfilled order
@@ -1068,6 +1086,8 @@ void StockMarketAccount::updateMarketPriceAfterOrder(std::string symbolInput, st
     changeDataItem(companyInfoDBFile, newMarketPrice, findRowNumber(companyInfoDBFile, symbolInput, 0), 1);
 }
 
+
+void StockMarketAccount::deletePortfolio(){}
 
 void StockMarketAccount::clearOrdersNewDay(){}
 void StockMarketAccount::updateOrderDataBases(){}
