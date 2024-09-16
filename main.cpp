@@ -105,6 +105,7 @@ class BankAccount
         void checkIfStockMarketEnabled();
 
 
+        double getBalance();
 
 }BankAccObj;
 
@@ -143,6 +144,7 @@ class StockMarketAccount
     void updatePortfolioAfterOrder(std::string, int , int, int);
     void updateMarketPriceAfterOrder(std::string, std::string);
     void deletePortfolio();
+    void addToFunds();
 
 
 
@@ -232,12 +234,11 @@ void Menu::openStockMarketMenu()
 
     do
     {  
-        std::cout << newLineHeader << "STOCK MARKET" << drawLine << newLineBody << "1 - Open Portfolio" << newLineBody << "2 - Place Order" << newLineBody << "3 - View Orders" << newLineBody << "4 - Search Symbols" << newLineBody << "5 - Display Account Details" << newLineBody << "6 - Return to Bank Account" << std::endl << newLineBody << "Enter choice: ";
+        std::cout << newLineHeader << "STOCK MARKET" << drawLine << newLineBody << "1 - Open Portfolio" << newLineBody << "2 - Place Order" << newLineBody << "3 - View Orders" << newLineBody << "4 - Add to funds" << newLineBody << "5 - Search Symbols" << newLineBody << "6 - Display Account Details" << newLineBody << "7 - Return to Bank Account" << std::endl << newLineBody << "Enter choice: ";
         std::cin >> choice;
 
         switch(choice)
         {
-
             case 1:
             StockMarketAccObj.showPortfolio();
             break;
@@ -246,13 +247,13 @@ void Menu::openStockMarketMenu()
             MenuObj.placeOrderStockMarketMenu();
             break;
 
-            case 4:
+
+            case 3:
+            StockMarketAccObj.addToFunds();
+
+            case 5:
             StockMarketAccObj.searchSymbolStockMarket();
             break;
-
-
-            
-
 
             case 6:
             MenuObj.bankAccountMenu();
@@ -533,6 +534,7 @@ void BankAccount::transfer()
 
 void BankAccount::displayBankAccountDetails()
 {
+    //      !! Password doesnt work
     char choice;
     std::cout << newLineHeader << "BANK ACCOUNT DETAILS" << drawLine << newLineBody << "Name: " << name << newLineBody << "Account Number: "<<accountNumber<< newLineBody << "Balance: "<<balance<< newLineBody << "E-Mail ID: " << emailID << std::endl;
     std::cout << newLineBody << "Do you want to view your account password (Y/N): ";
@@ -627,6 +629,13 @@ void BankAccount::checkIfStockMarketEnabled()
 
 }
 
+//  OTHER FUNCTIONS
+
+double BankAccount::getBalance()
+{
+    return balance;
+}
+
 
  //     STOCK MARKET FUNCTIONS
 
@@ -636,6 +645,7 @@ int StockMarketAccount::enableStockMarket(int accountRowNumberInut, std::string 
 
     changeDataItem(bankAccountDataBasefileName, "1\0", accountRowNumberInut, 3);
 
+    //Creates order file for account
     accountNumber = accountNumberInput;
     accountOrdersFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolio.csv";
     file.open(accountOrdersFile, std::ios::out);
@@ -647,6 +657,7 @@ int StockMarketAccount::enableStockMarket(int accountRowNumberInut, std::string 
     file << "Order Status, Symbol, No. Of Shares, Purchase Price, Order Type(B-0 & S-1), Order Number";
     file.close();
 
+    //Creates portfolio file for account
     accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolios.csv";
     file.open(accountPortfolioFile, std::ios::out);
     if (!file.is_open()) 
@@ -755,6 +766,30 @@ void StockMarketAccount::searchSymbolStockMarket()
             return;
         }
 
+
+    }
+
+}
+
+void StockMarketAccount::addToFunds()
+{
+    double balanceInBank = BankAccObj.getBalance();
+    double withdrawAmount;
+    bool withdrawSuccessStatus = 0;
+
+    std::cout << newLineBody << "Enter amount to add to Stock Market funds: ";
+    std::cin >> withdrawAmount;
+
+    if(balanceInBank>= withdrawAmount)
+    {
+        balanceInBank-=withdrawAmount;
+        changeDataItem(bankAccountDataBasefileName, std::to_string(balanceInBank), currentAccountRow, 2);
+        balanceSM = withdrawAmount;
+        std::cout << newLineBody << "\nSUCCESSFULLY ADDED TO FUNDS" << drawLine << newLineBody << "Current Fund Balance: " << balanceInBank;
+    }
+    else
+    {
+        std::cout << newLineBody << "Withdraw amount greater than balance." << std::endl;
 
     }
 
@@ -938,6 +973,7 @@ void StockMarketAccount::matchOrders()
 
     //Goes through all buy orders
     int i = 0;
+    int j = 0;
     for(i = 1; i <= numberOfBuyOrders; i++)
     {
         buyOrderRow = getRow(buyOrderBookFile, i);
@@ -951,9 +987,8 @@ void StockMarketAccount::matchOrders()
         sharesNeededTotal = stoi(buyOrderRow[5]);
 
         //Goes through all sell orders
-        for(int j = 1; j <= numberOfSellOrders; j++)
+        for(j = 1; j <= numberOfSellOrders; j++)
         {
-
             sellOrderRow = getRow(sellOrderBookFile, j);
             numberOfSharesInSellerAccount = stoi(sellOrderRow[5]);
 
@@ -966,7 +1001,6 @@ void StockMarketAccount::matchOrders()
                     //Updates seller order and portfolio
                     numberOfSharesInSellerAccount-=(sharesNeededTotal - sharesPresentTotal);
                     changeDataItem(sellOrderBookFile, std::to_string(numberOfSharesInSellerAccount), j, 5 );
-
                     updatePortfolioAfterOrder(sellOrderRow[3], numberOfSharesInSellerAccount, 1, j);
  
                     //Updates buyer order and portfolio
@@ -976,23 +1010,24 @@ void StockMarketAccount::matchOrders()
                     orderCompleteFlag = 1;
                     
                 }
+                //Incomplete fullfilment of order
                 else
                 {
                     sharesPresentTotal += numberOfSharesInSellerAccount;
+                    updatePortfolioAfterOrder(sellOrderRow[3], 1, j);
                     deleteOrder(1, j);
-
-                }
+                }       
 
             }
         }
 
         if(orderCompleteFlag)
         {
-            //No need to update if it is market price order
+            //      !! No need to update if it is market price order
             updateMarketPriceAfterOrder(buyOrderRow[4], buyOrderRow[6]);
             continue;
         }
-        //If partial fulfillment of buy order
+        //If partial or no fulfillment of buy order
         else
         {
             //If no shares sold - market bot is called
@@ -1000,10 +1035,13 @@ void StockMarketAccount::matchOrders()
             {
 
             }
+            //If partial fulfillment - update buyer order
             else
             {
                 changeDataItem(buyOrderBookFile, std::to_string(sharesNeededTotal - sharesPresentTotal), i, 5);
+                std::cout << newLineBody << drawLine << i;
                 updatePortfolioAfterOrder(buyOrderRow[3], sharesPresentTotal, 0, i);
+
             }
 
         }
@@ -1032,7 +1070,7 @@ void StockMarketAccount::deleteOrder(bool orderType, int orderNumber)
 //Updates portfolio when no splitting of order
 void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInput, int orderType, int orderNumber) 
 {
-    std::string portfolioFileNameForUpdate = "stockMarketDataBases\\portfolios\\" + accountNumberInput + "Portfolio.csv";
+    std::string portfolioFileNameForUpdate = "stockMarketDataBases\\orders\\" + accountNumberInput + "Orders.csv";
     std::vector<std::string> rowItemToFind;
     std::vector<int> columnNumber;
 
@@ -1051,7 +1089,7 @@ void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInpu
 //Updates portfolio when order is to be split
 void StockMarketAccount::updatePortfolioAfterOrder(std::string accountNumberInput, int newNumberOfSharesInOrder, int orderType, int orderNumber) 
 {
-    std::string portfolioFileNameForUpdate = "stockMarketDataBases\\portfolios\\" + accountNumberInput + "Portfolio.csv";
+    std::string portfolioFileNameForUpdate = "stockMarketDataBases\\orders\\" + accountNumberInput + "Orders.csv";
     std::vector<std::string> rowItemToFind;
     std::vector<int> columnNumber;
 
