@@ -67,7 +67,7 @@ class BankAccount
         std::string emailID;
         std::string password;
         std::string accountNumber;
-        int balance;
+        double balance;
         bool stockMarketAccountStatus;
         int panNumber = 0;
 
@@ -114,7 +114,7 @@ class StockMarketAccount
     std::string accountOrdersFile;
     std::string accountPortfolioFile;
     int currentAccountRow;
-    int balanceSM;
+    double balanceSM;
 
 
     public:
@@ -132,7 +132,7 @@ class StockMarketAccount
         accountOrdersFile = "stockMarketDataBases\\orders\\" + accountNumber + "Orders.csv";
         accountPortfolioFile = "stockMarketDataBases\\portfolios\\" + accountNumber + "Portfolios.csv";
     }
-    bool chkIfCanBuy(int);
+    bool chkIfCanBuy(double);
     void addOrderToBookAndPortfolio(int, int durationTypeInput, std::string symbolInput, int numOfSharesInput, std::string bidPrice, int limitInput, int tirggerInput);
     void marketPriceRandomizer(int currentRowInput);
     void deleteOrder(bool orderType, int orderNumber);
@@ -142,7 +142,7 @@ class StockMarketAccount
     void updatePortfolioAfterOrder(std::string, int, int);
     void updatePortfolioAfterOrder(std::string, int , int, int);
     void updateMarketPriceAfterOrder(std::string, std::string);
-    void StockMarketAccount::deletePortfolio();
+    void deletePortfolio();
 
 
 
@@ -434,7 +434,7 @@ void BankAccount::setBankAccountData()
             break;
 
             case 2:
-            balance = stoi(rowItem[i]);
+            balance = std::stod(rowItem[i]);
             break;
 
             case 3:
@@ -460,7 +460,7 @@ void BankAccount::setBankAccountData()
 
 void BankAccount::withdraw()
 {
-    int withdrawAmount;
+    double withdrawAmount;
     bool withdrawSuccessStatus = 0;
 
     std::cout << newLineBody << "Enter amount to withdraw: ";
@@ -482,7 +482,7 @@ void BankAccount::withdraw()
 
 void BankAccount::deposit()
 {
-    int depositAmount;
+    double depositAmount;
 
     std::cout << newLineBody << "Enter amount to deposit: ";
     std::cin >> depositAmount;
@@ -494,12 +494,12 @@ void BankAccount::deposit()
 
 void BankAccount::transfer()
 {
-    int transferAmount;
+    double transferAmount;
     std::string transferAccountNumber;
     bool transferSuccessStatus = 0;
 
     std::string transferAccountBalanceString;
-    int transferAccountBalance;
+    double transferAccountBalance;
     int transferAccountRowNumber = 0;
 
     std::cout << newLineBody << "Enter account number to transfer to: ";
@@ -517,7 +517,7 @@ void BankAccount::transfer()
         //Chnages balance in the reciever's account
         transferAccountRowNumber = findRowNumber(bankAccountDataBasefileName, transferAccountNumber, 0);
         transferAccountBalanceString = getDataItem(bankAccountDataBasefileName, transferAccountRowNumber, 2);
-        transferAccountBalance = stoi(transferAccountBalanceString) + transferAmount;
+        transferAccountBalance = stod(transferAccountBalanceString) + transferAmount;
         changeDataItem(bankAccountDataBasefileName, std::to_string(transferAccountBalance), transferAccountRowNumber, 2);
 
         std::cout << newLineBody << "SUCCESSFULLY TRANSFERRED" << newLineBody << "Current Balance: " << balance;
@@ -767,11 +767,11 @@ void StockMarketAccount::buySharesStockMarket(std::string symbolInput, int symbo
     int choice;
     int numberOfShares;
     int durationType;
-    int limitPrice = 0;
-    int triggerPrice = 0;
+    double limitPrice = 0;
+    double triggerPrice = 0;
 
     std::string currentMarketPriceString = getDataItem(companyInfoDBFile, symbolRowNumberInput, 1);
-    int currentMarketPrice = stoi(currentMarketPriceString);
+    double currentMarketPrice = stod(currentMarketPriceString);
     do
     {
         std::cout << newLineHeader << "BUYING " << symbolInput << drawLine << newLineBody << "Choose Order Type: " << newLineBody << "1 - Market Price Order" << newLineBody << "2 - Limit Order" << newLineBody << "3 - Stop Limit Order" << newLineBody << "4 - Leave Menu" << newLineBody << newLineBody << "Enter Choice: ";  
@@ -853,7 +853,7 @@ void StockMarketAccount::buySharesStockMarket(std::string symbolInput, int symbo
 
 }
 
-bool StockMarketAccount::chkIfCanBuy(int amount)
+bool StockMarketAccount::chkIfCanBuy(double amount)
 {   
     if(amount>balanceSM)
     {
